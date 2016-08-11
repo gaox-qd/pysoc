@@ -1,3 +1,4 @@
-# pysoc
-PySOC: python+fortran, spin-orbit coupling, TDDFT, TDDFTB, Gaussian 09, DFTB+
-to be
+# PySOC
+
+Features:
+a. evaluation of spin-orbit coupling elements between singlet and triplet states
