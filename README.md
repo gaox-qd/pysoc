@@ -11,3 +11,4 @@ d. Breit-Pauli spin-orbit Hamiltonian with effective charge approximation
 Note:
    atomic integrals are calculated from MolSOC code developed by Sandro Giuseppe Chiodo et al.
    citation to MolSOC code: Computer Physics Communications 185 (2014) 676–683
+
