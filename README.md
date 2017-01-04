@@ -11,10 +11,10 @@ d. Breit-Pauli spin-orbit Hamiltonian with effective charge approximation
 
 citation to PySOC code:
 
-Evaluation of Spin-Orbit Couplings with Linear-Response Time-Dependent Density Functional Methods 
-Xing Gao, Shuming Bai, Daniele Fazzi, Thomas Niehaus, Mario Barbatti, and Walter Thiel 
-Journal of Chemical Theory and Computation   
-DOI: 10.1021/acs.jctc.6b00915 
+Evaluation of Spin-Orbit Couplings with Linear-Response Time-Dependent Density Functional Methods  
+Xing Gao, Shuming Bai, Daniele Fazzi, Thomas Niehaus, Mario Barbatti, and Walter Thiel  
+Journal of Chemical Theory and Computation  
+DOI: 10.1021/acs.jctc.6b00915  
 
   
 Note for MolSOC:  
