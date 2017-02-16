@@ -14,6 +14,7 @@ II: Reference and citation to PySOC code:
 Evaluation of Spin-Orbit Couplings with Linear-Response Time-Dependent Density Functional Methods  
 Xing Gao, Shuming Bai, Daniele Fazzi, Thomas Niehaus, Mario Barbatti, and Walter Thiel  
 J. Chem. Theory Comput., 2017, 13 (2), pp 515–524 
+
 DOI: 10.1021/acs.jctc.6b00915  
 
   
