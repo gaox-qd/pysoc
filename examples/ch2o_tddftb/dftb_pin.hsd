@@ -1,0 +1,101 @@
+Geometry = GenFormat {
+4 C
+C O H
+1   1  -1.3182900000E-01  -1.0000000000E-06  -2.8600000000E-04
+2   2   1.0652880000E+00   1.0000000000E-06   9.0000000000E-05
+3   3  -7.1843900000E-01   9.3970500000E-01   9.7000000000E-05
+4   3  -7.1844100000E-01  -9.3970500000E-01   1.3600000000E-04
+}
+Driver = {}
+Hamiltonian = DFTB {
+  SCC = Yes
+  SCCTolerance = 1e-10
+  MaxAngularMomentum = {
+    H = "s"
+    C = "p"
+    O = "p"
+  }
+  SlaterKosterFiles = Type2FileNames {
+    Prefix = "/fsnfs/users/xinggao/work/gsh/thiothymine/gtsh/test_python/tddftb/sk/mio-1-1/"
+    Separator = "-"
+    Suffix = ".skf"
+    LowerCaseTypeName = No
+  }
+  LinearResponse = {
+    NrOfExcitations = 10
+    StateOfInterest = 0
+    Symmetry = both
+    HubbardDerivatives = {
+      H = {
+0.347100   0.491900
+      }
+      C = {
+0.341975   0.387425
+      }
+      O = {
+0.467490   0.523300
+      }
+    }
+    WriteTransitions = Yes
+    WriteTransitionDipole = Yes
+    WriteXplusY = Yes
+    EnergyWindow = 100000.000000000
+    OscStrWindow = 1000.00000000000
+    WriteMulliken = No
+    WriteCoefficients = No
+    WriteStatusArnoldi = No
+  }
+  PolynomialRepulsive = {}
+  OldRepulsiveSum = No
+  OrbitalResolvedSCC = No
+  OldSKInterpolation = No
+  OnsiteCorrection = No
+  Charge = 0.000000000000000E+000
+  ReadInitialCharges = No
+  InitialCharges = {}
+  MaxSCCIterations = 100
+  Mixer = Broyden {
+    MixingParameter = 0.200000000000000
+    CachedIterations = -1
+    InverseJacobiWeight = 1.000000000000000E-002
+    MinimalWeight = 1.00000000000000
+    MaximalWeight = 100000.000000000
+    WeightFactor = 1.000000000000000E-002
+  }
+  ElectricField = {}
+  DampXH = No
+  SpinPolarisation = {}
+  Eigensolver = DivideAndConquer {}
+  Filling = Fermi {
+    Temperature = 0.000000000000000E+000
+  }
+  Dispersion = {}
+  ThirdOrder = No
+  ThirdOrderFull = No
+}
+Options = {
+  WriteEigenvectors = Yes
+  WriteHS = Yes
+  CalculateForces = No
+  WriteAutotestTag = No
+  WriteDetailedXML = No
+  WriteResultsTag = No
+  WriteDetailedOut = Yes
+  WriteBandOut = Yes
+  AtomResolvedEnergies = No
+  RestartFrequency = 20
+  RandomSeed = 0
+  WriteRealHS = No
+  MinimiseMemoryUsage = No
+  ShowFoldedCoords = No
+}
+ParserOptions = {
+  ParserVersion = 4
+  WriteHSDInput = Yes
+  WriteXMLInput = No
+  StopAfterParsing = No
+  IgnoreUnprocessedNodes = No
+}
+Analysis = {
+  ProjectStates = {}
+}
