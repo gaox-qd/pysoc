@@ -1,4 +1,9 @@
-# PySOC
+# PySOC - Calculation of Spin-Orbit Coupling
+
+**This is a fork of the spin-orbit coupling calculation program PySOC, originally by jzpathfinder.
+The aim of this fork is to provide updates and quality of life improvements, including upgrading from the now deprecated python2.\* to python3.6.**
+
+*The remainder of this readme is taken from the orginal readme file:*
 
 I: Basic Features for PySOC:  
 (code: pysoc.tar.gz; short tutorial: pysoc.pdf)  
