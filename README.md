@@ -5,6 +5,8 @@ The aim of this fork is to provide updates and quality of life improvements, inc
 
 *The remainder of this readme is taken from the orginal readme file:*
 
+---
+
 I: Basic Features for PySOC:  
 (code: pysoc.tar.gz; short tutorial: pysoc.pdf)  
 
