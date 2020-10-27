@@ -1,25 +1,34 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3.6
 
-''' run soc calculation
-'''
+"""
+Driver script for pysoc.
+"""
+
 import re
 import sys
 import subprocess
 import string
 import fileinput
 
-def shell_cmd(cmd):
-   out = subprocess.call(cmd, shell=True)
-   return out
+def run(command):
+    """
+    Run an external program, watching for certain types of errors.
 
-# where are the soc scripts: soc.py and soc_td
-scrip_soc = '/fsnfs/users/xinggao/work/gsh/thiothymine/gtsh/test_python/soc_tb/bin'
+    :param command: An iterable of the command to be run (eg, ["ls", "./", "-l"])
+    """
+    try:
+        subprocess.run(
+            command,
+            check = True
+            )
+    except FileNotFoundException as e:
+        # The specified command could not be found.
+        raise Exception("Could not find external command '{}'; is PySOC setup correctly?".format(command[0])) from e
 
-#please check and set the control parameters in init.py before run pysoc
-shell_cmd(scrip_soc+'/soc.py')
-shell_cmd(scrip_soc+'/soc_td')
+# First we run the python script which performs setup (?).
+run(("soc.py",))
 
-
-
+# Then the fortran program.
+run(("soc_td",))
 
 
