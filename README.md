@@ -1,7 +1,9 @@
 # PySOC
 
 I: Basic Features for PySOC:  
-(code: pysoc.tar.gz; short tutorial: pysoc.pdf)  
+(code: pysoc.tar.gz; short tutorial: pysoc.pdf) 
+(Even more better tutorial written in Chinese by Lu Tian:http://bbs.keinsci.com/thread-9442-1-1.html)
+(For Gaussian 16:http://bbs.keinsci.com/thread-19813-1-1.html)
 
 a. evaluation of spin-orbit coupling elements between singlet and triplet states  
 b. Python scripts + FORTRAN  
