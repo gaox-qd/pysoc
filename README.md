@@ -2,7 +2,7 @@
 I: Code and tutorial:
 
 a. code: pysoc.tar.gz; short tutorial: pysoc.pdf  
-b. Even more better tutorial written in Chinese by Lu Tian (http://bbs.keinsci.com/thread-9442-1-1.html) 
+b. Even more better tutorial written in Chinese by Lu Tian http://bbs.keinsci.com/thread-9442-1-1.html  
 c. For Gaussian 16:http://bbs.keinsci.com/thread-19813-1-1.html  
 
 II: Basic Features for PySOC:  
