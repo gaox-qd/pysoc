@@ -1,3 +1,4 @@
+import os
 def read_file(file_name, start_str, num_lines = 1, remaining_fields = 1):
     """
     Read a given file and return a subsection of the contained data.
@@ -41,14 +42,7 @@ def read_file(file_name, start_str, num_lines = 1, remaining_fields = 1):
 
     # All done.
     return data_out
-
-
-#def write_file(dat_in=[], fileout='out.dat',style='{}'):
-#       with open(fileout, 'w' ) as f:
-#           for line in dat_in:
-#               f.write(style.format(line))
-#
-
+   
 
 def write_file(data, file_name, style = "{}"):
     """
@@ -63,6 +57,18 @@ def write_file(data, file_name, style = "{}"):
         for line in data:
             # Write each line according to the specified line_style.
             file.write(style.format(line))
+            
+            
+def check_file_exist(file_names):
+    """
+    Determine whether a (number of) files exists or not.
+    
+    :param file_name: List of paths of the files to check. If any of the files do not exist, an exception will be raised.
+    """
+    for file_name in file_names:
+        if not os.path.isfile(file_name):
+            # TODO: Better exception type?
+            raise Exception("Required file '{}' does not exist".format(file_name))
 
 
 

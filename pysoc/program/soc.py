@@ -14,7 +14,7 @@ sys.path.append('.')
 from init import *
 
 # PySOC imports.
-from pysoc.io.file import read_file, write_file
+from pysoc.io.file import read_file, write_file, check_file_exist
 
 
 #parameter
@@ -414,12 +414,12 @@ elif QM_ex_flag and QM_code == 'tddftb':
 elif QM_ex_flag:
 	print 'Only Gaussian tddft or TD-DFTB+ code are available now,,,'
 
-def check_file_exist(filename=[], err_inf='not exist'):
-    for f in filename: 
-        isfile = os.path.isfile(f)
-        if not isfile:
-            print ("file {} is " + err_inf).format(f)
-            sys.exit()
+# def check_file_exist(filename=[], err_inf='not exist'):
+#     for f in filename: 
+#         isfile = os.path.isfile(f)
+#         if not isfile:
+#             print ("file {} is " + err_inf).format(f)
+#             sys.exit()
 
 #check the existence of Output file from third party quantum chemistry code
 # like gaussian.log and gaussian.rwf
@@ -475,7 +475,7 @@ write_file(ci_coeff, 'ci_coeff.dat', '{}  ')
 #on atomic basis
 #check the existence of molsoc.inp and molsoc_basis
 ########################################################################
-check_file_exist(molsoc_input, 'not generated successfully,,,')
+check_file_exist(molsoc_input)
 subprocess.call(molsoc_path+' '+molsoc_input[0], shell=True)
 
 if QM_code == 'tddftb':
