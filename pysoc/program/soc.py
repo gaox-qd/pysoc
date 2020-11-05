@@ -21,11 +21,11 @@ from pysoc.io.file import read_file, write_file
 au_2_angs = (0.52917721092) # from wikipedia
 angs_2_au = (1.88972612456) # 1/Bohr
 
-
-class Prep_Basis:
-   pass
-   def __init__(self):
-       print "prepare basis set"
+# This doesn't appear to be used at all?
+#class Prep_Basis:
+#   pass
+#   def __init__(self):
+#       print "prepare basis set"
 
 #test = QM_ex()
 '''read the output from QM calculation for the:
