@@ -21,7 +21,7 @@ def run(command):
             command,
             check = True
             )
-    except FileNotFoundException as e:
+    except FileNotFoundError as e:
         # The specified command could not be found.
         raise Exception("Could not find external command '{}'; is PySOC setup correctly?".format(command[0])) from e
 

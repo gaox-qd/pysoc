@@ -3,14 +3,18 @@
    td-dft(Gaussian)/td-dftb(DFTB+, Thomas Niehaus)
    by Xing Gao, MPI@Muelheim, 2015
 '''
+
+# General imports.
 import sys 
-#import init as io
 import os
 import re
 import subprocess
 from itertools import islice
 sys.path.append('.')
 from init import *
+
+# PySOC imports.
+from pysoc.io.file import read_file, write_file
 
 
 #parameter
@@ -32,35 +36,6 @@ class Prep_Basis:
    e. CIS coefficients
 '''
 f_num = re.compile(r'[-+]?\d*\.\d+|\d+')
-
-#######################################################################
-def read_file(filein='fileinput', sign='where_start',
-              nt=1, nr=1):
-    dat_out = []
-    with open(filein, 'r') as f:
-        for nline, line in enumerate(f):
-            if sign in line:
-                break
-        nf = nt - 1 
-        #print filein, nf, nt, nline
-        for nline, line in enumerate(f):
-            dat_out.extend(line.split())
-            if nline == nf:
-                break
-        #print 'endline', line
-        if nr != 0:
-            #print 'nr=', nr
-            for line in f:
-               print line.split()[0:nr]
-               dat_out.extend(line.split()[0:nr])
-               break
-    return dat_out
-
-#######################################################################
-def write_file(dat_in=[], fileout='out.dat',style='{}'):
-       with open(fileout, 'w' ) as f:
-           for line in dat_in:
-               f.write(style.format(line))
 
 #######################################################################
 
@@ -466,6 +441,7 @@ if QM_code == 'gauss_tddft':
        print nbov
    except:
        print "Error when reading gaussian output"
+       raise
    #
 elif QM_code == 'tddftb':
    print "output from td-dftb+ is called..." 
@@ -483,6 +459,7 @@ elif QM_code == 'tddftb':
        print nbov
    except:
        print "Error when reading td-dftb+ output"
+       raise
    #
        
 
