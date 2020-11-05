@@ -4,11 +4,7 @@
 Driver script for pysoc.
 """
 
-import re
-import sys
 import subprocess
-import string
-import fileinput
 
 def run(command):
     """
