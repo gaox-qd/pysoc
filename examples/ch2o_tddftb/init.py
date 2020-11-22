@@ -19,7 +19,7 @@ sys.path.append(g09root+'/g09')
 ##molsoc code from Sandro Giuseppe Chiodo
 ##with small modifications for input because only the soc
 ##in atomic basis is needed in the following calculation 
-molsoc_path = '/fsnfs/users/xinggao/bin/molsoc/molsoc0.1.exe' 
+molsoc_path = '/home/oliver/ownCloud/Chemistry/St. Andrews PhD/PySOC/PySOC Src/bin/molsoc0.1.exe' 
 
 #input files
 
@@ -34,7 +34,7 @@ elif QM_code == 'tddftb':
              'XplusY.DAT', 'SPX.DAT']
    geom_xyz = ['ch2o.xyz']
    soc_key  = ['ANG', 'Zeff', 'DIP', 'TDB']
-dir_para_basis = '/fsnfs/users/xinggao/work/gsh/thiothymine/gtsh/test_python/tddftb/sto2gto/mio-1-1'
+dir_para_basis = '/home/oliver/ownCloud/Chemistry/St. Andrews PhD/PySOC/PySOC Src/parameters/mio-1-1-fit'
 ##input for molsoc(to be generated) 
 molsoc_input = ['molsoc.inp', 'molsoc_basis']
 

@@ -19,7 +19,8 @@ sys.path.append(g09root+'/g09')
 ##molsoc code from Sandro Giuseppe Chiodo
 ##with small modifications for input because only the soc
 ##in atomic basis is needed in the following calculation 
-molsoc_path = '/fsnfs/users/xinggao/bin/molsoc/molsoc0.1.exe' 
+#molsoc_path = '/fsnfs/users/xinggao/bin/molsoc/molsoc0.1.exe'
+molsoc_path = '/home/oliver/ownCloud/Chemistry/St. Andrews PhD/PySOC/PySOC Src/bin/molsoc0.1.exe'
 
 #input files
 
