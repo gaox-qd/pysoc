@@ -57,14 +57,8 @@ if QM_code == 'gauss_tddft':
         #parser = Gaussian_parser(qm_out[0], qm_out[1], n_s, n_t)
         #parser.parse(molsoc_input[0], molsoc_input[1], soc_key, soc_scal)
 
-        print singlet_energies
-        print singlet_levels
-        print triplet_energies
-        print triplet_levels
-        print nbov
-    except Exception:
-        print "Error when reading gaussian output"
-        raise
+    except Exception as e:
+        raise Exception("Error when reading Gaussian output")
 
 elif QM_code == 'tddftb':
     print "output from td-dftb+ is called..." 
@@ -76,14 +70,8 @@ elif QM_code == 'tddftb':
         #r.read_tdtb(qm_out, soc_key, soc_scal, molsoc_input, geom_xyz,\
         #           dir_para_basis)
 
-        print singlet_energies
-        print singlet_levels
-        print triplet_energies
-        print triplet_levels
-        print nbov
-    except:
-        print "Error when reading td-dftb+ output"
-        raise
+    except Exception as e:
+        raise Exception("Error when reading td-dftb+ output")
        
 
 ########################################################################
