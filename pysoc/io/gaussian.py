@@ -56,8 +56,8 @@ class RWF_parser(object):
         :param code: A code identifying a section to extract.
         :return: A tuple of the 'Dump of file' line followed by a list of lines.
         """
-        dumped_data =  str(subprocess.check_output([self.RWFDUMP, self.rwf_file_name, "-", code])).split("\n")
-        
+        dumped_data =  str(subprocess.check_output([self.RWFDUMP, self.rwf_file_name, "-", code], universal_newlines = True)).split("\n")
+                
         # Find start line and remove everything before.
         try:
             start_pos = [index for index, line in enumerate(dumped_data) if self.START_STRING in line][0]
@@ -112,6 +112,7 @@ class RWF_parser(object):
         
         # This header has the format: Dump of file   xxxx length         xxxx (read left to right):
         #                                                                ^^^^
+        
         return int(header.split()[5])
 
 
@@ -189,7 +190,54 @@ class Gaussian_parser(Output_parser):
         return sum(self.ao_basis[k][1] for k in range(len(self.ao_basis))) 
             
     
-    def parse(self, inp_file_name, basis_file_name, keywords, soc_scale = 1):
+    def parse_RWF(self):
+        """
+        Parse output from the rwf file.
+        """
+        # Get our parser object.
+        rwf_parser = RWF_parser(self.rwf_file_name)
+        
+        # Now extract each of the sections we require.
+        
+        # First MO energy.
+        #MO_energy = rwf_parser.parse(rwf_parser.MO_ENERGY, self.num_orbitals)[self.num_frozen_orbitals:]
+        self.MO_energies = rwf_parser.parse(rwf_parser.MO_ENERGY, self.num_orbitals)[self.num_frozen_orbitals:]
+        
+        # AO overlap.
+        #num_AO = self.num_orbitals * (self.num_orbitals +1) /2
+        self.AO_overlaps = rwf_parser.parse(rwf_parser.AO_OVERLAP, self.num_AO_overlaps)
+        
+        # Alpha molecular orbital coefficients.
+        self.MOA_coefficients = rwf_parser.parse(rwf_parser.MOA_COEFFS)
+        # Remove frozen orbitals.
+        self.MOA_coefficients = self.MOA_coefficients[self.num_frozen_orbitals * self.num_orbitals : self.num_orbitals **2]
+        
+        # The highest numbered excited state we are interested in.
+        max_level = max(self.singlet_levels + self.triplet_levels)
+        
+        # Don't understand the logic behind this maths; leaving as is for now...
+        dim = self.num_occupied_orbitals * self.num_virtual_orbitals
+        dat_lenth = rwf_parser.num_XY_coefficients
+        mseek = int((dat_lenth-12) / (dim*4+1))
+        nline = dim * 2 * (max_level +mseek) + 12
+        
+        # Read ci coefficients (whatever they are).
+        self.CI_coefficients = rwf_parser.parse(rwf_parser.XY_COEFFS, nline)
+        
+        # Don't understand this bit either; leave as is...
+        ci_xpy, ci_xmy = [], []
+        
+        for i in self.singlet_levels + self.triplet_levels:   #singlets come first, then triplets
+            np = 12 + dim * 2 * (i-1) 
+            
+            ci_xpy += self.CI_coefficients[np:np+dim*2] #X+Y(xpy)
+            np = 12 + dim * 2 * (mseek+i-1) #X-Y(xmy)
+            
+            ci_xmy += self.CI_coefficients[np:np+dim*2]
+            
+        self.CI_coefficients = ci_xpy + ci_xmy
+    
+    def parse(self):
         """
         
         :param inp_file_name: Path to the molsoc input file to write.
@@ -253,6 +301,7 @@ class Gaussian_parser(Output_parser):
                 elif 'primitive gaussians' in line:
                     # End of basis set section.
                     self.basis_set_end_line = line_num -1
+                    
         # We open our .log file again to start reading from the top.
         with open(self.log_file_name, 'r') as log_file:
             # Cut out the geometry section.
@@ -270,26 +319,7 @@ class Gaussian_parser(Output_parser):
         ### Prepare new input files for molsoc. ###
         
         # Now write our molsoc file.
-        with open(inp_file_name, 'wt') as inp_file:
-            # First, write a header/comment (probably unnecessary).
-            inp_file.write('#input for soc in atomic basis\n')
-            
-            # Now 'keys' (key words?) for molsoc.
-            # Write each key separated by whitespace.
-            # Might need a final double whitespace after last keyword, not sure...
-            inp_file.write("  ".join(keywords))
-            inp_file.write("\n")
-            
-            # Write empty comment (?)
-            inp_file.write("#\n")
-            
-            # Now write geometry.
-            for element, x_coord, y_coord, z_coord in self.geometry:
-                inp_file.write('{:<4}{:>15.5f}{:>15.5f}{:>15.5f}{:>7.2f}\n'.format(element, x_coord, y_coord, z_coord, soc_scale))
-            
-            # Finally, end with the 'End' keyword.
-            inp_file.write("End\n")
-            
+        #self.write_molsoc_input(keywords, inp_file_name, soc_scale)            
        
         # Read basis set information.
         with open(self.log_file_name, 'r') as log_file:
@@ -321,72 +351,13 @@ class Gaussian_parser(Output_parser):
             self.basis_set.pop()
             
         # Write molsoc basis set file.
-        with open(basis_file_name, 'w') as basis_file:
-            # Write each basis set line.
-            for basis_set_line in self.basis_set:
-                basis_file.write(basis_set_line)
-            
-            # Finally write a last END.
-            basis_file.write("END")
-            
-        # TODO: This check probably isn't required.    
-        #if self.ao_basis_sum != self.num_orbitals:
-        #    raise Exception("n_basis is not eq to nbov[0]!!")
-        
+        #self.write_molsoc_basis(basis_file_name)
+                    
         # Now write the strange ao_basis.dat.
-        with open('ao_basis.dat', 'w') as ao_basis_file:
-            # First write the number of different subshells and also the total number of atomic orbitals.
-            ao_basis_file.write('{}  {}\n'.format(len(self.ao_basis), self.ao_basis_sum))
-            
-            # Now write the 'number' of each subshell.
-            for atomic_orbital in self.ao_basis:
-                ao_basis_file.write('{}  '.format(atomic_orbital[1]))
+        #self.write_AO_basis()    
     
-    
-    
-        # Begin parsing the rwf file.
-        # Get our parser object.
-        rwf_parser = RWF_parser(self.rwf_file_name)
-        
-        # Now extract each of the sections we require.
-        
-        # First MO energy.
-        #MO_energy = rwf_parser.parse(rwf_parser.MO_ENERGY, self.num_orbitals)[self.num_frozen_orbitals:]
-        self.MO_energies = rwf_parser.parse(rwf_parser.MO_ENERGY, self.num_orbitals)[self.num_frozen_orbitals:]
-        
-        # AO overlap.
-        #num_AO = self.num_orbitals * (self.num_orbitals +1) /2
-        self.AO_overlaps = rwf_parser.parse(rwf_parser.AO_OVERLAP, self.num_AO_overlaps)
-        
-        # Alpha molecular orbital coefficients.
-        self.MOA_coefficients = rwf_parser.parse(rwf_parser.MOA_COEFFS)
-        # Remove frozen orbitals.
-        self.MOA_coefficients = self.MOA_coefficients[self.num_frozen_orbitals * self.num_orbitals : self.num_orbitals **2]
-        
-        # The highest numbered excited state we are interested in.
-        max_level = max(self.singlet_levels + self.triplet_levels)
-        
-        # Don't understand the logic behind this maths; leaving as is for now...
-        dim = self.num_occupied_orbitals * self.num_virtual_orbitals
-        dat_lenth = rwf_parser.num_XY_coefficients
-        mseek = (dat_lenth-12) / (dim*4+1)
-        nline = dim * 2 * (max_level +mseek) + 12
-        
-        # Read ci coefficients (whatever they are).
-        self.CI_coefficients = rwf_parser.parse(rwf_parser.XY_COEFFS, nline)
-        
-        # Don't understand this bit either; leave as is...
-        ci_xpy, ci_xmy = [], []
-        
-        for i in self.singlet_levels + self.triplet_levels:   #singlets come first, then triplets
-            np = 12 + dim * 2 * (i-1) 
-            
-            ci_xpy += self.CI_coefficients[np:np+dim*2] #X+Y(xpy)
-            np = 12 + dim * 2 * (mseek+i-1) #X-Y(xmy)
-            
-            ci_xmy += self.CI_coefficients[np:np+dim*2]
-            
-        self.CI_coefficients = ci_xpy + ci_xmy 
+        # Get data from the rwf file.
+        self.parse_RWF()
 
         # Return our extracted data.
         return (self.singlet_energies, 
@@ -398,13 +369,82 @@ class Gaussian_parser(Output_parser):
                 self.MOA_coefficients,
                 self.AO_overlaps,
                 self.CI_coefficients)
+        
+    def write_AO_basis(self, file_name = "ao_basis.dat"):
+        """
+        Write the atomic orbital basis file.
+        
+        :param file_name: The file name to write to.
+        """
+        with open(file_name, 'w') as ao_basis_file:
+            # First write the number of different subshells and also the total number of atomic orbitals.
+            ao_basis_file.write('{}  {}\n'.format(len(self.ao_basis), self.ao_basis_sum))
+            
+            # Now write the 'number' of each subshell.
+            for atomic_orbital in self.ao_basis:
+                ao_basis_file.write('{}  '.format(atomic_orbital[1]))
+    
+    def write_molsoc_basis(self, file_name = "molsoc_basis"):
+        """
+        Write the molsoc basis input file.
+        
+        :param file_name: The file name to write to.
+        """
+        with open(file_name, 'w') as basis_file:
+            # Write each basis set line.
+            for basis_set_line in self.basis_set:
+                basis_file.write(basis_set_line)
+            
+            # Finally write a last END.
+            basis_file.write("END")
+            
+    def write_molsoc_input(self, keywords,  soc_scale = 1, file_name = "molsoc.inp",):
+        """
+        Write the molsoc input file.
+        
+        :param keywords: List of molsoc keywords (strings).
+        :param file_name: The file name to write to.
+        :param soc_scale: Scaling factor for Zeff.
+        """
+        with open(file_name, 'wt') as inp_file:
+            # First, write a header/comment (probably unnecessary).
+            inp_file.write('#input for soc in atomic basis\n')
+            
+            # Now 'keys' (key words?) for molsoc.
+            # Write each key separated by whitespace.
+            # Might need a final double whitespace after last keyword, not sure...
+            inp_file.write("  ".join(keywords))
+            inp_file.write("\n")
+            
+            # Write empty comment (?)
+            inp_file.write("#\n")
+            
+            # Now write geometry.
+            for element, x_coord, y_coord, z_coord in self.geometry:
+                inp_file.write('{:<4}{:>15.5f}{:>15.5f}{:>15.5f}{:>7.2f}\n'.format(element, x_coord, y_coord, z_coord, soc_scale))
+            
+            # Finally, end with the 'End' keyword.
+            inp_file.write("End\n")
+        
+    def prepare_molsoc_input(self, keywords, soc_scale, inp_file_name, basis_file_name, AO_basis_file_name):
+        """
+        Prepare input files for molsoc.
+        """
+        # Now write our molsoc file.
+        self.write_molsoc_input(keywords, soc_scale, inp_file_name)
+        
+        # Write molsoc basis set file.
+        self.write_molsoc_basis(basis_file_name)
+                    
+        # Now write the strange ao_basis.dat.
+        self.write_AO_basis(AO_basis_file_name)    
     
     @property
     def num_AO_overlaps(self):
         """
         The number of atomic orbital overlaps.
         """
-        return self.num_orbitals * (self.num_orbitals +1) /2
+        return int(self.num_orbitals * (self.num_orbitals +1) /2)
     
     @property
     def singlet_energies(self):

@@ -59,7 +59,7 @@ def write_file(data, file_name, style = "{}"):
             file.write(style.format(line))
             
             
-def check_file_exist(file_names):
+def check_file_exist(*file_names):
     """
     Determine whether a (number of) files exists or not.
     

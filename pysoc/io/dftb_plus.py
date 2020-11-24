@@ -18,7 +18,6 @@ class DFTB_plus_parser(Output_parser):
         This section has not yet been updated...
         """
         ###reading MO_energy, # of mo, occ, virt
-        print "reading MO_energy, # of mo, occ, virt..." 
         MO_energies, nbov = [], []
         var = []
         with open(outfile[0], 'r') as f:
@@ -33,10 +32,9 @@ class DFTB_plus_parser(Output_parser):
                             nb = nline
                             #print nb
             nbov.extend((nline-1, nb, nline-1-nb))
-        print "MO_energies", MO_energies
-        print "nbov", nbov
+
         ###reading singlet and triplet energies
-        print "reading singlet and triplet energies..."
+        
         ene_t, ene_s = [], []
         iit, iis = 0, 0
         with open(outfile[1], 'r') as f:
@@ -52,27 +50,24 @@ class DFTB_plus_parser(Output_parser):
                             iis = iis + 1
                             a = [iis, float(var)]
                             ene_s.append(a)
-        print "ene_t", ene_t
-        print "ene_s", ene_s
-        order1 = [ene_s[i-1][0] for i in self.n_s]
-        order2 = [ene_t[i-1][0] for i in self.n_t]
-        order0 = order1 + order2
+        
+        singlet_levels = [ene_s[i-1][0] for i in self.n_s]
+        triplet_levels = [ene_t[i-1][0] for i in self.n_t]
+        order0 = singlet_levels + triplet_levels
         singlet_energies = [ene_s[i-1][1] for i in self.n_s]
         triplet_energies = [ene_t[i-1][1] for i in self.n_t]
-        print 'singlet_energies', singlet_energies
-        print 'triplet_energies', triplet_energies
-        print 'total order for the roots:', order0
+        
         ###reading oversqr.dat (ao overlap)
-        print "reading oversqr.dat (ao overlap)..."
+        
         AO_overlaps = []
         with open(outfile[2], 'r') as f:
             for line in f:
                 if len(line.split()) == nbov[0]:
                     AO_overlaps.extend(line.split())
-        print "len(AO_overlaps)", len(AO_overlaps)
+        
         ###reading eigenvec.out(mo coeffs)
         ###and save above basis set info  
-        print "reading eigenvec.out(mo coeffs)..."
+        
         MOA_coefficients = []
         ao_basis = []
         orb = ['s1', 'p1', 'p2', 'p3', \
@@ -104,9 +99,7 @@ class DFTB_plus_parser(Output_parser):
 
         ao_virt =n_basis - nbov[1]
         ao_ncart  = [n_basis, nbov[1], ao_virt]
-        print "ao_ncart", ao_ncart
-        print "len,nbasis", nc_basis, n_basis
-        print ao_basis       
+        
         with open('ao_basis.dat', 'w') as f:
             f.write('{}  {}\n'.format(nc_basis, n_basis))
             for i in range(nc_basis):
@@ -114,16 +107,16 @@ class DFTB_plus_parser(Output_parser):
        
         ###reading XplusY.DAT(X+Y coeffs) 
         ###and reorder XplusY according SPX.DAT 
-        print "reading XplusY.DAT(X+Y coeffs)..."
+        
         CI_coefficients, ci_xpy = [], []
         ndim = nbov[1] * nbov[2]
-        print "nidm", ndim
+        
         with open(outfile[4], 'r') as f:
             for line in f:
                 if(line.split()[1] not in ['S','T'] and 
                    float(line.split()[0]) != ndim): #6 data each line
                     CI_coefficients.extend(line.split())
-        print "CI_coefficients", CI_coefficients[0], CI_coefficients[-1]
+        
         trans_key = [] #occ->virt transition order
         with open(outfile[5], 'r') as f:
             for line in f:
@@ -138,39 +131,34 @@ class DFTB_plus_parser(Output_parser):
         for i in self.n_s:
             np = (nt+i-1) * ndim
             trans_dict = {trans_key[k]: CI_coefficients[np+k] for k in range(ndim)}
-            for k, v in sorted(trans_dict.iteritems()):
+            for k, v in sorted(trans_dict.items()):
                 ci_xpy.append(v)
                 #print "trans_ci_singlet:",[ord(o) for o in k.split(' ')]
         for i in self.n_t:
             np = (i-1) * ndim
             trans_dict = {trans_key[k]: CI_coefficients[np+k] for k in range(ndim)}
-            for k, v in sorted(trans_dict.iteritems()):
+            for k, v in sorted(trans_dict.items()):
                 ci_xpy.append(v)
                 #print "trans_ci_triplet:",[ord(o) for o in k.split(' ')]
         CI_coefficients = ci_xpy
-        print len(ci_xpy) 
+         
         #print ci_xpy
        
 
         ###prepare input for molsoc
-        print "prepare input for molsoc..."
         ngeom = 1 # coordinate after line 1 in xyz file
-        print geom_xyz[0]
         with open(geom_xyz[0], 'r') as f:
             for line in f:
                 natom = int(self.NUMBER_SEARCH.findall(line)[0])
                 break
-            print "natom", natom
+            
             lines = list(islice(f, ngeom, ngeom+natom)) 
             element = [x.split()[0] for x in lines]
-            geom = [map(float,x.split()[1:4]) for x in lines]
+            geom = [list(map(float,x.split()[1:4])) for x in lines]
             #print geom
-            print element
 
         with open(molsoc_input[0], 'w') as f:
-            print "hello", molsoc_input[0]
             f.write('#input for soc in atomic basis\n')
-            print soc_key
             for k in soc_key:
                 f.write('{}  '.format(k))
             f.write('\n')
@@ -181,9 +169,7 @@ class DFTB_plus_parser(Output_parser):
             f.write('End')
                
         ###build basis set 
-        print "build basis set..."
         with open(molsoc_input[1], 'w') as fw:
-            print "dir_para_basis", dir_para_basis
             for i, el in enumerate(element):
                 bas_f = dir_para_basis+'/'+el+'.basis'
                 #print "bas_f", bas_f
@@ -196,5 +182,15 @@ class DFTB_plus_parser(Output_parser):
                     fw.write('END')
 
 
-        return singlet_energies, triplet_energies, order1, order2, nbov, ao_ncart, \
-              MO_energies, MOA_coefficients, AO_overlaps, CI_coefficients
+        self.singlet_energies = singlet_energies
+        self.triplet_energies = triplet_energies
+        self.singlet_levels = singlet_levels
+        self.triplet_levels = triplet_levels
+        self.num_orbitals = nbov[0]
+        self.num_occupied_orbitals = nbov[1]
+        self.num_virtual_orbitals = nbov[2]
+        self.ao_ncart = ao_ncart
+        self.MO_energies = MO_energies
+        self.MOA_coefficients = MOA_coefficients
+        self.AO_overlaps = AO_overlaps
+        self.CI_coefficients = CI_coefficients
