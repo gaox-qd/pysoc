@@ -10,6 +10,21 @@ class Output_parser(object):
     NUMBER_SEARCH = re.compile(r'[-+]?\d*\.\d+|\d+')
     
     @property
+    def ndim(self):
+        """
+        The product of the number of occupied and virtual orbitals.
+        """
+        return self.num_occupied_orbitals * self.num_virtual_orbitals
+    
+    @property
+    def ao_basis_sum(self):
+        """
+        The total number of atomic orbitals.
+        """
+        #return sum(self.ao_basis[k][1] for k in range(len(self.ao_basis)))
+        return sum(self.ao_basis[k] for k in range(len(self.ao_basis)))
+    
+    @property
     def requested_singlets(self):
         """
         The singlet excited states we have been asked to calculate SOC for.

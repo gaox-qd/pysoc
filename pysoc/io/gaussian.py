@@ -198,13 +198,6 @@ class Gaussian_parser(Output_parser):
             **kwargs
         )
     
-    @property
-    def ao_basis_sum(self):
-        """
-        The total number of atomic orbitals.
-        """
-        return sum(self.ao_basis[k][1] for k in range(len(self.ao_basis))) 
-    
     def parse_RWF(self):
         """
         Parse output from the rwf file.
@@ -231,10 +224,10 @@ class Gaussian_parser(Output_parser):
         max_level = max(self.singlet_levels + self.triplet_levels)
         
         # Don't understand the logic behind this maths; leaving as is for now...
-        dim = self.num_occupied_orbitals * self.num_virtual_orbitals
+        #ndim = self.num_occupied_orbitals * self.num_virtual_orbitals
         dat_lenth = rwf_parser.num_XY_coefficients
-        mseek = int((dat_lenth-12) / (dim*4+1))
-        nline = dim * 2 * (max_level +mseek) + 12
+        mseek = int((dat_lenth-12) / (self.ndim*4+1))
+        nline = self.ndim * 2 * (max_level +mseek) + 12
         
         # Read ci coefficients (whatever they are).
         self.CI_coefficients = rwf_parser.parse(rwf_parser.XY_COEFFS, nline)
@@ -243,22 +236,18 @@ class Gaussian_parser(Output_parser):
         ci_xpy, ci_xmy = [], []
         
         for i in self.singlet_levels + self.triplet_levels:   #singlets come first, then triplets
-            np = 12 + dim * 2 * (i-1) 
+            np = 12 + self.ndim * 2 * (i-1) 
             
-            ci_xpy += self.CI_coefficients[np:np+dim*2] #X+Y(xpy)
-            np = 12 + dim * 2 * (mseek+i-1) #X-Y(xmy)
+            ci_xpy += self.CI_coefficients[np:np+self.ndim*2] #X+Y(xpy)
+            np = 12 + self.ndim * 2 * (mseek+i-1) #X-Y(xmy)
             
-            ci_xmy += self.CI_coefficients[np:np+dim*2]
+            ci_xmy += self.CI_coefficients[np:np+self.ndim*2]
             
         self.CI_coefficients = ci_xpy + ci_xmy
     
     def parse(self):
         """
-        
-        :param inp_file_name: Path to the molsoc input file to write.
-        :param basis_file_name: Path to the molsoc basis file to write.
-        :param keywords: List of molsoc keywords (strings).
-        :param soc_scale: Scaling factor for Zeff.
+        Parse required data from the specified files.
         """
         # Open our log file.
         with open(self.log_file_name, 'rt') as log_file:
@@ -353,7 +342,8 @@ class Gaussian_parser(Output_parser):
                 if parts[0] in self.SHELLS:
                     # Append the sub_orbital and its mapping to ao_basis...
                     sub_orbital = parts[0]
-                    self.ao_basis.append([sub_orbital, self.SHELLS[sub_orbital]])
+                    #self.ao_basis.append([sub_orbital, self.SHELLS[sub_orbital]])
+                    self.ao_basis.append(self.SHELLS[sub_orbital])
                     
                 if len(parts) == 2 and re.search(r'\d \d', basis_set_line):
                     #line = '{}  {}\n'.format(element[i], line.split()[1])
@@ -369,16 +359,6 @@ class Gaussian_parser(Output_parser):
         # Get data from the rwf file.
         self.parse_RWF()
 
-        # Return our extracted data.
-#         return (self.singlet_energies, 
-#                 self.triplet_energies,
-#                 self.singlet_levels,
-#                 self.triplet_levels,
-#                 [self.num_orbitals, self.num_occupied_orbitals, self.num_virtual_orbitals],
-#                 self.MO_energies,
-#                 self.MOA_coefficients,
-#                 self.AO_overlaps,
-#                 self.CI_coefficients)
         
     def write_AO_basis(self, file_name = "ao_basis.dat"):
         """
@@ -392,7 +372,8 @@ class Gaussian_parser(Output_parser):
             
             # Now write the 'number' of each subshell.
             for atomic_orbital in self.ao_basis:
-                ao_basis_file.write('{}  '.format(atomic_orbital[1]))
+                #ao_basis_file.write('{}  '.format(atomic_orbital[1]))
+                ao_basis_file.write('{}  '.format(atomic_orbital))
     
     def write_molsoc_basis(self, file_name = "molsoc_basis"):
         """

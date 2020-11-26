@@ -8,6 +8,9 @@ class DFTB_plus_parser(Output_parser):
     """
     Class for parsing the required output from Gaussian.
     """
+    
+    # Recognised orbital labels.
+    ORBITALS = ['s1', 'p1', 'p2', 'p3', 'd1', 'd2', 'd3', 'd4', 'd5', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7']
 
     @classmethod
     def get_default_fitted_basis(self):
@@ -53,9 +56,29 @@ class DFTB_plus_parser(Output_parser):
         self.requested_singlets = requested_singlets
         self.requested_triplets = requested_triplets
         
+        # Init attributes.
+        # Orbital information.
+        self.num_orbitals = 0
+        self.num_occupied_orbitals = 0
+        self.num_virtual_orbitals = 0
+
+        # List of MO energies.
+        self.MO_energies = []
+        
         # Lists of triplet and singlet energies. Each item is an iterable where the first item is the level (1, 2, 3 etc), and the second the energy (in eV).
         self.singlet_states = []
         self.triplet_states = []
+        
+        # List of atomic orbital overlaps (not really sure what the format of this is).
+        self.AO_overlaps = []
+        
+        # ao_basis is a list of len() == 2 iterables, where the first item is a shell label (S, P, SP etc), and the second is the corresponding occupancy? (1, 3, 4 etc).
+        # Not sure what the purpose of ao_basis is.
+        self.ao_basis = []
+        
+        # Alpha and beta MO coefficients.
+        self.MOA_coefficients = []
+        self.MOB_coefficients = []
         
     @classmethod
     def from_output_files(self,
@@ -110,12 +133,138 @@ class DFTB_plus_parser(Output_parser):
         Path to the fitted basis set directory.
         """
         self._fitted_basis_directory = value
+    
+    def parse_excited_states(self):
+        """
+        Parse excited states information.
+        
+        This method is called as part of parse() (you do not normally need to call this method yourself).
+        """
+        # TODO: This could be improved...
+        triplet_level, singlet_level = 1, 1
+        
+        # Start reading the file.
+        with open(self.excitations_file_name, 'r') as excitations_file:
+            for line in excitations_file:
+                
+                # Split up the line on whitespace.
+                parts = line.split()
+                
+                # Ignore comment or header lines which don't contain numbers.
+                if len(parts) > 1 and self.NUMBER_SEARCH.match(parts[0]):
+                    
+                    # The first item (parts[0]) is the energy in eV.
+                    energy = float(parts[0])
+                    
+                    if 'T' in line.split():
+                        # Triplet excited state.
+                        self.triplet_states.append([triplet_level, energy])
+                        triplet_level +=1
+                        
+                    elif 'S' in line.split():
+                        # Singlet excited state.
+                        self.singlet_states.append([singlet_level, energy])
+                        singlet_level += 1
+                            
+    def parse_MO_energies(self):
+        """
+        Parse MO energies.
+        
+        This method is called as part of parse() (you do not normally need to call this method yourself).
+        """
+        # Start reading.
+        with open(self.band_file_name, 'r') as band_file:
+            for line in band_file:
+                
+                # Split.
+                parts = line.split()
+                if len(parts) > 1 and self.NUMBER_SEARCH.match(parts[0]):
+                    # The first part is the energy.
+                    self.MO_energies.append(float(parts[0]))
+                    
+                    # The second is the occupancy.
+                    occupancy = float(parts[1])
+                    # For some reason, we take 0.00005 as the threshold for occupancy...
+                    if occupancy - 1.0 > 1.0E-5:
+                        self.num_occupied_orbitals += 1
+                    else:
+                        self.num_virtual_orbitals += 1
+                        
+                    # Increment out number of orbitals.
+                    self.num_orbitals += 1
+                            
+    def parse_AO_overlap(self):
+        """
+        Parse atomic orbital overlaps.
+        
+        This method is called as part of parse() (you do not normally need to call this method yourself).
+        """
+        with open(self.overlap_matrix_file_name, 'r') as overlap_matrix_file:
+            for line in overlap_matrix_file:
+                if len(line.split()) == self.num_orbitals:
+                    self.AO_overlaps.extend(line.split())
+    
+    def parse_MOA_coefficients(self):
+        """
+        Parse molecular orbital (alpha) coefficients.
+        """
+        
+        max_shell = ['s1', 'p3', 'd5', 'f7']
+        # Start reading.
+        with open(self.eigenvectors_file_name, 'r') as eigenvectors_file:
+            for line in eigenvectors_file:
+                # Split on whitespace.
+                parts = line.split()
+                
+                # Only save lines which contain coefficients.
+                if len(parts) > 1 and parts[0] in self.ORBITALS:
+                    self.MOA_coefficients.append(parts[1])
+        
+        # Start reading from the start again to determine which orbital shells we're dealing with.
+        with open(self.eigenvectors_file_name, 'r') as eigenvectors_file:
+            for line in eigenvectors_file:
+                # Split on whitespace.
+                parts = line.split()
+                
+                if len(parts) > 1:
+                    # Save the number of shells once we've finished reading each orbital
+                    if parts[0] in max_shell:
+                        # For d and f orbitals we save 6 and 10 shells rather than the 5 and 7.
+                        # Otherwise we just save the number of given shells.
+                        if parts[0] == 'd5':
+                            #self.ao_basis.append('6')
+                            self.ao_basis.append(6)
+                        elif parts[0] == 'f7':
+                            self.ao_basis.append('10')
+                            self.ao_basis.append(10)
+                        else:
+                            self.ao_basis.append(int(list(parts[0])[1]))
+                            
+                    # We only need to save shells once, so stop after the first orbital.
+                    elif all(s in parts for s in ['Eigenvector:', '2']):
+                        break
         
     def parse(self):
         """
-        TODO: This should do something...
+        Parse required data from the specified files.
         """
-        pass
+        self.parse_excited_states()
+        self.parse_MO_energies()
+        self.parse_AO_overlap()
+        self.parse_MOA_coefficients()
+        
+    @property
+    def ao_ncart(self):
+        """
+        A 3 membered list consisting of:
+         - The total number of basis sets.
+         - The number of occupied orbitals.
+         - The number of 'virtual' basis sets.
+         
+        Not currently clear why this is necessary...
+        """
+        return [self.ao_basis_sum, self.num_occupied_orbitals, self.ao_basis_sum - self.num_occupied_orbitals]
+    
     
     def prepare_molsoc_input(self, keywords, soc_scale, output):
         """
@@ -130,106 +279,22 @@ class DFTB_plus_parser(Output_parser):
         # Use default scaling if none given.
         soc_scale = soc_scale if soc_scale is not None else 1
         
-        ###reading MO_energy, # of mo, occ, virt
-        MO_energies, nbov = [], []
-        var = []
-        with open(self.band_file_name, 'r') as f:
-            for nline, line in enumerate(f):
-                #print nline
-                if len(line.split()) > 1:
-                    var = line.split()[0]
-                    #print "var_temp", var
-                    if self.NUMBER_SEARCH.match(var):
-                        MO_energies.append(var)
-                        if float(line.split()[1]) - 1.0 > 1.0E-5:
-                            nb = nline
-                            #print nb
-            nbov.extend((nline-1, nb, nline-1-nb))
-
-        ###reading singlet and triplet energies
-        
-        #ene_t, ene_s = [], []
-        iit, iis = 0, 0
-        with open(self.excitations_file_name, 'r') as f:
-            for line in f:
-                if len(line.split()) > 1:
-                    var = line.split()[0]
-                    if self.NUMBER_SEARCH.match(var):
-                        if 'T' in line.split():
-                            iit = iit + 1
-                            a = [iit, float(var)]
-                            #ene_t.append(a)
-                            self.triplet_states.append([iit, float(var)])
-                        elif 'S' in line.split():
-                            iis = iis + 1
-                            a = [iis, float(var)]
-                            #ene_s.append(a)
-                            self.singlet_states.append([iis, float(var)])
-        
-        #singlet_levels = [ene_s[i-1][0] for i in self.requested_singlets]
-        #triplet_levels = [ene_t[i-1][0] for i in self.requested_triplets]
-        
-        #singlet_energies = [ene_s[i-1][1] for i in self.requested_singlets]
-        #triplet_energies = [ene_t[i-1][1] for i in self.requested_triplets]
-        
-        ###reading oversqr.dat (ao overlap)
-        
-        AO_overlaps = []
-        with open(self.overlap_matrix_file_name, 'r') as f:
-            for line in f:
-                if len(line.split()) == nbov[0]:
-                    AO_overlaps.extend(line.split())
-        
-        ###reading eigenvec.out(mo coeffs)
-        ###and save above basis set info  
-        
-        MOA_coefficients = []
-        ao_basis = []
-        orb = ['s1', 'p1', 'p2', 'p3', \
-               'd1', 'd2', 'd3', 'd4', 'd5', \
-               'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7']
-        max_shell = ['s1', 'p3', 'd5', 'f7']
-        with open(self.eigenvectors_file_name, 'r') as f:
-            for line in f:
-                a = line.split()
-                if len(a) > 1:
-                    if a[0] in orb:
-                        MOA_coefficients.append(a[1])
-        with open(self.eigenvectors_file_name, 'r') as f:
-            for line in f:
-                a = line.split()
-                if len(a) > 1:
-                    if a[0] in max_shell:
-                        if a[0] == 'd5':
-                            ao_basis.append('6')
-                        elif a[0] == 'f7':
-                            ao_basis.append('10')
-                        else:
-                            ao_basis.append(list(a[0])[1])
-                    elif all(s in a for s in ['Eigenvector:', '2']):
-                        break
-       
-        n_basis = sum(int(io) for io in ao_basis) # the # of Cartesian AOs
-        nc_basis = len(ao_basis)
-
-        ao_virt =n_basis - nbov[1]
-        ao_ncart  = [n_basis, nbov[1], ao_virt]
         
         with open(AO_basis_file_name, 'w') as f:
-            f.write('{}  {}\n'.format(nc_basis, n_basis))
-            for i in range(nc_basis):
-                f.write('{}  '.format(ao_basis[i]))
+            f.write('{}  {}\n'.format(len(self.ao_basis), self.ao_basis_sum))
+            for i in range(len(self.ao_basis)):
+                f.write('{}  '.format(self.ao_basis[i]))
        
         ###reading XplusY.DAT(X+Y coeffs) 
         ###and reorder XplusY according SPX.DAT 
         
         CI_coefficients, ci_xpy = [], []
-        ndim = nbov[1] * nbov[2]
+        
+        #ndim = self.num_occupied_orbitals * self.num_virtual_orbitals
         
         with open(self.x_plus_y_file_name, 'r') as f:
             for line in f:
-                if(line.split()[1] not in ['S','T'] and 
-                   float(line.split()[0]) != ndim): #6 data each line
+                if(line.split()[1] not in ['S','T'] and float(line.split()[0]) != self.ndim): #6 data each line
                     CI_coefficients.extend(line.split())
         
         trans_key = [] #occ->virt transition order
@@ -244,14 +309,14 @@ class DFTB_plus_parser(Output_parser):
         #print "nidm", ndim
         nt = len(self.triplet_states) #num of triplets come before singlets
         for i in self.requested_singlets:
-            np = (nt+i-1) * ndim
-            trans_dict = {trans_key[k]: CI_coefficients[np+k] for k in range(ndim)}
+            np = (nt+i-1) * self.ndim
+            trans_dict = {trans_key[k]: CI_coefficients[np+k] for k in range(self.ndim)}
             for k, v in sorted(trans_dict.items()):
                 ci_xpy.append(v)
                 #print "trans_ci_singlet:",[ord(o) for o in k.split(' ')]
         for i in self.requested_triplets:
-            np = (i-1) * ndim
-            trans_dict = {trans_key[k]: CI_coefficients[np+k] for k in range(ndim)}
+            np = (i-1) * self.ndim
+            trans_dict = {trans_key[k]: CI_coefficients[np+k] for k in range(self.ndim)}
             for k, v in sorted(trans_dict.items()):
                 ci_xpy.append(v)
                 #print "trans_ci_triplet:",[ord(o) for o in k.split(' ')]
@@ -298,17 +363,6 @@ class DFTB_plus_parser(Output_parser):
                     fw.write('END')
 
 
-#         self.singlet_energies = singlet_energies
-#         self.triplet_energies = triplet_energies
-#         self.singlet_levels = singlet_levels
-#         self.triplet_levels = triplet_levels
-        self.num_orbitals = nbov[0]
-        self.num_occupied_orbitals = nbov[1]
-        self.num_virtual_orbitals = nbov[2]
-        self.ao_ncart = ao_ncart
-        self.MO_energies = MO_energies
-        self.MOA_coefficients = MOA_coefficients
-        self.AO_overlaps = AO_overlaps
         self.CI_coefficients = CI_coefficients
         
         # Return the filenames we wrote.
