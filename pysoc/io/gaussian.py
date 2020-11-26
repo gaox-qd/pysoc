@@ -1,10 +1,10 @@
 # Methods for reading/writing Gaussian files.
 
 from itertools import islice
+from pathlib import Path
 import re
-
-from pysoc.io.file import read_file
 import subprocess
+
 from pysoc.io import Output_parser
 
 '''read the output from QM calculation for the:
@@ -15,7 +15,7 @@ from pysoc.io import Output_parser
    e. CIS coefficients
 '''
 
-class RWF_parser(object):
+class RWF_parser():
     """
     Class for parsing data from gaussian binary files (.rwf and .chk).
     """
@@ -97,7 +97,6 @@ class RWF_parser(object):
         
         # Only keep the number of records we're interested in.
         if num_records > -1:
-            print(num_records)
             records = records[:num_records]
         
         # And return the data.
@@ -124,22 +123,21 @@ class Gaussian_parser(Output_parser):
     # A mapping of subshell labels to number of orbitals (?)
     SHELLS = {"S": 1, "P": 3, "SP": 4, "D": 6, "F": 10}
     
-    def __init__(self, log_file_name, rwf_file_name, num_singlets, num_triplets):
+    def __init__(self, log_file_name, rwf_file_name, requested_singlets, requested_triplets):
         """
         Constructor for Gaussian_parser objects.
         
         :param log_file_name: Name/path to the log file to parse.
         :param rwf_file_name: Name/path to the read-write file to parse.
-        :param g09root: Path to the g09root.
-        :param number_singlets: The number of singlets to calculate.
-        :param number_triplets: The number of triplets to calculate.
+        :param requested_singlets: A list of singlet excited states to calculate SOC for.
+        :param requested_triplets: A list of triplet excited states to calculate SOC for.
         """
         # Save our input files.
         self.log_file_name = log_file_name
         self.rwf_file_name = rwf_file_name
         
-        self.num_singlets = num_singlets
-        self.num_triplets = num_triplets
+        self.requested_singlets = requested_singlets
+        self.requested_triplets = requested_triplets
         
         # Init attributes.
         # Orbital information.
@@ -168,7 +166,7 @@ class Gaussian_parser(Output_parser):
         # A list of basis set information. This is cut out from a Gaussian log file without modification.
         self.basis_set = []
         
-        # ao_basis is a list of len() == 2 iterables, where the first item is a shell labe (S, P, SP etc), and the second is the corresponding occupancy? (1, 3, 4 etc).
+        # ao_basis is a list of len() == 2 iterables, where the first item is a shell label (S, P, SP etc), and the second is the corresponding occupancy? (1, 3, 4 etc).
         # Not sure what the purpose of ao_basis is.
         self.ao_basis = []
         
@@ -181,14 +179,31 @@ class Gaussian_parser(Output_parser):
         
         # List of CI coefficients (configuration interaction coefficients?)
         self.CI_coefficients = []
+    
+    @classmethod
+    def from_output_files(self, log_file_name, *, rwf_file_name = None, **kwargs):
+        """
+        Create a Gaussian parser from a .log output file.
         
+        This constructor is more intelligent than __init__() and will attempt to guess the location of other required output files from the location of the given log file.
+        """
+        # Convert to path.
+        log_file_name = Path(log_file_name)
+        
+        # Return new object using normal constructor.
+        return self(
+            log_file_name = log_file_name,
+            # Use the specified aux files if given, otherwise guess from the log file and standard file names.
+            rwf_file_name = rwf_file_name if rwf_file_name is not None else log_file_name.with_suffix(".rwf"),
+            **kwargs
+        )
+    
     @property
     def ao_basis_sum(self):
         """
         The total number of atomic orbitals.
         """
         return sum(self.ao_basis[k][1] for k in range(len(self.ao_basis))) 
-            
     
     def parse_RWF(self):
         """
@@ -302,6 +317,13 @@ class Gaussian_parser(Output_parser):
                     # End of basis set section.
                     self.basis_set_end_line = line_num -1
                     
+        # Check we were able to parse as many excited states as were asked.
+        if max(self.requested_singlets) > len(self.singlet_states):
+            raise Exception("Unable to parse requested singlet excited state num {}; only found {} singlets".format(max(self.requested_singlets), len(self.singlet_states)))
+        
+        if max(self.requested_triplets) > len(self.triplet_states):
+            raise Exception("Unable to parse requested triplet excited state num {}; only found {} triplets".format(max(self.requested_triplets), len(self.triplet_states)))
+                    
         # We open our .log file again to start reading from the top.
         with open(self.log_file_name, 'r') as log_file:
             # Cut out the geometry section.
@@ -313,13 +335,7 @@ class Gaussian_parser(Output_parser):
                 parts = geometry.split()
                 
                 # Add to our geometry list.
-                self.geometry.append([parts[0], float(parts[1]), float(parts[2]), float(parts[3])])
-                            
-
-        ### Prepare new input files for molsoc. ###
-        
-        # Now write our molsoc file.
-        #self.write_molsoc_input(keywords, inp_file_name, soc_scale)            
+                self.geometry.append([parts[0], float(parts[1]), float(parts[2]), float(parts[3])])    
        
         # Read basis set information.
         with open(self.log_file_name, 'r') as log_file:
@@ -349,26 +365,20 @@ class Gaussian_parser(Output_parser):
             
             # Remove the last line (a final '****').
             self.basis_set.pop()
-            
-        # Write molsoc basis set file.
-        #self.write_molsoc_basis(basis_file_name)
-                    
-        # Now write the strange ao_basis.dat.
-        #self.write_AO_basis()    
-    
+                
         # Get data from the rwf file.
         self.parse_RWF()
 
         # Return our extracted data.
-        return (self.singlet_energies, 
-                self.triplet_energies,
-                self.singlet_levels,
-                self.triplet_levels,
-                [self.num_orbitals, self.num_occupied_orbitals, self.num_virtual_orbitals],
-                self.MO_energies,
-                self.MOA_coefficients,
-                self.AO_overlaps,
-                self.CI_coefficients)
+#         return (self.singlet_energies, 
+#                 self.triplet_energies,
+#                 self.singlet_levels,
+#                 self.triplet_levels,
+#                 [self.num_orbitals, self.num_occupied_orbitals, self.num_virtual_orbitals],
+#                 self.MO_energies,
+#                 self.MOA_coefficients,
+#                 self.AO_overlaps,
+#                 self.CI_coefficients)
         
     def write_AO_basis(self, file_name = "ao_basis.dat"):
         """
@@ -398,14 +408,17 @@ class Gaussian_parser(Output_parser):
             # Finally write a last END.
             basis_file.write("END")
             
-    def write_molsoc_input(self, keywords,  soc_scale = 1, file_name = "molsoc.inp",):
+    def write_molsoc_input(self, keywords,  soc_scale = None, file_name = "molsoc.inp",):
         """
         Write the molsoc input file.
         
         :param keywords: List of molsoc keywords (strings).
-        :param file_name: The file name to write to.
         :param soc_scale: Scaling factor for Zeff.
+        :param file_name: The file name to write to.
         """
+        # Use default scaling if none given.
+        soc_scale = soc_scale if soc_scale is not None else 1
+        
         with open(file_name, 'wt') as inp_file:
             # First, write a header/comment (probably unnecessary).
             inp_file.write('#input for soc in atomic basis\n')
@@ -425,19 +438,29 @@ class Gaussian_parser(Output_parser):
             
             # Finally, end with the 'End' keyword.
             inp_file.write("End\n")
-        
-    def prepare_molsoc_input(self, keywords, soc_scale, inp_file_name, basis_file_name, AO_basis_file_name):
+                    
+    def prepare_molsoc_input(self, keywords, soc_scale, output):
         """
         Prepare input files for molsoc.
+        
+        :param keywords: List of molsoc keywords (strings).
+        :param soc_scale: Scaling factor for Zeff.
+        :param output: Path to a directory to write molsoc files.
+        :return: A tuple of paths to the files written (molsoc.inp, molsoc_basis, ao_basis.dat)
         """
         # Now write our molsoc file.
+        inp_file_name = Path(output, "molsoc.inp")
         self.write_molsoc_input(keywords, soc_scale, inp_file_name)
         
         # Write molsoc basis set file.
+        basis_file_name = Path(output, "molsoc_basis")
         self.write_molsoc_basis(basis_file_name)
                     
         # Now write the strange ao_basis.dat.
-        self.write_AO_basis(AO_basis_file_name)    
+        AO_basis_file_name = Path(output, "ao_basis.dat")
+        self.write_AO_basis(AO_basis_file_name)
+        
+        return (inp_file_name, basis_file_name, AO_basis_file_name)
     
     @property
     def num_AO_overlaps(self):
@@ -446,37 +469,6 @@ class Gaussian_parser(Output_parser):
         """
         return int(self.num_orbitals * (self.num_orbitals +1) /2)
     
-    @property
-    def singlet_energies(self):
-        """
-        A list of singlet state energies parsed from the Gaussian output files.
-        """
-        return [self.singlet_states[i-1][1] for i in self.num_singlets]
-    
-    @property
-    def singlet_levels(self):
-        """
-        A list of singlet state levels parsed from the Gaussian output files.
-        
-        These levels take into account both singlets and triplets (if appropriate).
-        """
-        return [self.singlet_states[i-1][0] for i in self.num_singlets]
-    
-    @property
-    def triplet_energies(self):
-        """
-        A list of triplet state energies parsed from the Gaussian output files.
-        """
-        return [self.triplet_states[i-1][1] for i in self.num_triplets]
-    
-    @property
-    def triplet_levels(self):
-        """
-        A list of triplet state levels parsed from the Gaussian output files.
-        
-        These levels take into account both singlets and triplets (if appropriate).
-        """
-        return [self.triplet_states[i-1][0] for i in self.num_triplets]
         
     
     

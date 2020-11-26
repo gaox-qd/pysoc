@@ -1,1 +1,0 @@
-../pysoc/program/soc.py
