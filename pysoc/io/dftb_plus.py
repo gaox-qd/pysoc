@@ -80,6 +80,12 @@ class DFTB_plus_parser(Output_parser):
         self.MOA_coefficients = []
         self.MOB_coefficients = []
         
+        # List of CI coefficients (configuration interaction coefficients?)
+        self.CI_coefficients = []
+        
+        # This is a list of iterables of the form [element, x_coord, y_coord, z_coord]
+        self.geometry = []
+        
     @classmethod
     def from_output_files(self,
             xyz_file_name,
@@ -207,6 +213,8 @@ class DFTB_plus_parser(Output_parser):
     def parse_MOA_coefficients(self):
         """
         Parse molecular orbital (alpha) coefficients.
+        
+        This method is called as part of parse() (you do not normally need to call this method yourself).
         """
         
         max_shell = ['s1', 'p3', 'd5', 'f7']
@@ -243,7 +251,66 @@ class DFTB_plus_parser(Output_parser):
                     # We only need to save shells once, so stop after the first orbital.
                     elif all(s in parts for s in ['Eigenvector:', '2']):
                         break
+    
+    def parse_CI_coefficients(self):
+        """
+        Parse CI coefficients.
         
+        This method is called as part of parse() (you do not normally need to call this method yourself).
+        """
+        # There are two parts to this method:
+        # First we read in all available coefficients,
+        # second, we prune to only retain those coefficients we're interested in.
+        CI_coefficients = []
+        
+        # Read in all coefficients.
+        with open(self.x_plus_y_file_name, 'r') as x_plus_y_file:
+            for line in x_plus_y_file:
+                if(line.split()[1] not in ['S','T'] and float(line.split()[0]) != self.ndim): #6 data each line
+                    CI_coefficients.extend(line.split())
+                    
+        # Next we read in excited state transitions (?)
+        # We use this to reorder our list later.
+        transitions = [] #occ->virt transition order
+        with open(self.SPX_file_name, 'r') as f:
+            for line in f:
+                if len(line.split()) == 6: #6 data each line
+                    #chr: convert num to character
+                    transitions.append(
+                        "".join([chr(int(line.split()[i])) for i in [3, 5]])
+                    )
+
+        for i in self.requested_singlets:
+            np = (len(self.triplet_states) +i -1) * self.ndim
+            transition_coefficients = {transitions[k]: CI_coefficients[np+k] for k in range(self.ndim)}
+            for transition, coefficient in sorted(transition_coefficients.items()):
+                self.CI_coefficients.append(coefficient)
+                
+        for i in self.requested_triplets:
+            np = (i-1) * self.ndim
+            transition_coefficients = {transitions[k]: CI_coefficients[np+k] for k in range(self.ndim)}
+            for transition, coefficient in sorted(transition_coefficients.items()):
+                self.CI_coefficients.append(coefficient)
+                
+                    
+    def parse_geometries(self):
+        """
+        Parse xyz geometry.
+        """
+        with open(self.xyz_file_name, 'r') as xyz_file:
+            # Split into lines.
+            lines = xyz_file.read().split("\n")
+            
+            # The first line contains the number of atoms.
+            num_atoms = int(lines[0])
+            
+            # Remove the first two lines and any trailing lines.
+            lines = lines[2:num_atoms +2]
+            
+            # Parse into our geometry.
+            self.geometry = [(line.split()[0], float(line.split()[1]), float(line.split()[2]), float(line.split()[3])) for line in lines]
+        
+    
     def parse(self):
         """
         Parse required data from the specified files.
@@ -252,6 +319,8 @@ class DFTB_plus_parser(Output_parser):
         self.parse_MO_energies()
         self.parse_AO_overlap()
         self.parse_MOA_coefficients()
+        self.parse_CI_coefficients()
+        self.parse_geometries()
         
     @property
     def ao_ncart(self):
@@ -265,6 +334,28 @@ class DFTB_plus_parser(Output_parser):
         """
         return [self.ao_basis_sum, self.num_occupied_orbitals, self.ao_basis_sum - self.num_occupied_orbitals]
     
+    def write_molsoc_basis(self, file_name = "molsoc_basis"):
+        """
+        Write the molsoc basis input file.
+        
+        :param file_name: The file name to write to.
+        """
+        with open(file_name, 'w') as basis_file:
+            for i, geometry in enumerate(self.geometry):
+                # Write basis functions for each element (we copy from a supplied directory).
+                # First decide where we're copying from.
+                element_basis = Path(self.fitted_basis_directory, geometry[0] + '.basis')
+                
+                # Copy each element basis to a single file.
+                with open(element_basis, 'r') as element_basis_file:
+                    lines = element_basis_file.readlines()
+                    basis_file.writelines(lines)
+                
+                # Write out separator between basis, which changes if we're at the end of the file.
+                if i != len(self.geometry)-1:
+                    basis_file.write(' ****\n')
+                else:
+                    basis_file.write('END')
     
     def prepare_molsoc_input(self, keywords, soc_scale, output):
         """
@@ -272,98 +363,17 @@ class DFTB_plus_parser(Output_parser):
         
         This section has not yet been fully updated...
         """
+        # Now write our molsoc file.
         inp_file_name = Path(output, "molsoc.inp")
+        self.write_molsoc_input(keywords, soc_scale, inp_file_name)
+        
+        # Write molsoc basis set file.
         basis_file_name = Path(output, "molsoc_basis")
+        self.write_molsoc_basis(basis_file_name)
+                    
+        # Now write the strange ao_basis.dat.
         AO_basis_file_name = Path(output, "ao_basis.dat")
+        self.write_AO_basis(AO_basis_file_name)
         
-        # Use default scaling if none given.
-        soc_scale = soc_scale if soc_scale is not None else 1
-        
-        
-        with open(AO_basis_file_name, 'w') as f:
-            f.write('{}  {}\n'.format(len(self.ao_basis), self.ao_basis_sum))
-            for i in range(len(self.ao_basis)):
-                f.write('{}  '.format(self.ao_basis[i]))
-       
-        ###reading XplusY.DAT(X+Y coeffs) 
-        ###and reorder XplusY according SPX.DAT 
-        
-        CI_coefficients, ci_xpy = [], []
-        
-        #ndim = self.num_occupied_orbitals * self.num_virtual_orbitals
-        
-        with open(self.x_plus_y_file_name, 'r') as f:
-            for line in f:
-                if(line.split()[1] not in ['S','T'] and float(line.split()[0]) != self.ndim): #6 data each line
-                    CI_coefficients.extend(line.split())
-        
-        trans_key = [] #occ->virt transition order
-        with open(self.SPX_file_name, 'r') as f:
-            for line in f:
-                if len(line.split()) == 6: #6 data each line
-                    #chr: convert num to character
-                    trans_temp = [chr(int(line.split()[i])) for i in [3, 5]]
-                    trans_key.append("".join(trans_temp))
-
-        #ndim = nbov[1] * nbov[2]
-        #print "nidm", ndim
-        nt = len(self.triplet_states) #num of triplets come before singlets
-        for i in self.requested_singlets:
-            np = (nt+i-1) * self.ndim
-            trans_dict = {trans_key[k]: CI_coefficients[np+k] for k in range(self.ndim)}
-            for k, v in sorted(trans_dict.items()):
-                ci_xpy.append(v)
-                #print "trans_ci_singlet:",[ord(o) for o in k.split(' ')]
-        for i in self.requested_triplets:
-            np = (i-1) * self.ndim
-            trans_dict = {trans_key[k]: CI_coefficients[np+k] for k in range(self.ndim)}
-            for k, v in sorted(trans_dict.items()):
-                ci_xpy.append(v)
-                #print "trans_ci_triplet:",[ord(o) for o in k.split(' ')]
-        CI_coefficients = ci_xpy
-         
-        #print ci_xpy
-       
-
-        ###prepare input for molsoc
-        ngeom = 1 # coordinate after line 1 in xyz file
-        with open(self.xyz_file_name, 'r') as f:
-            for line in f:
-                natom = int(self.NUMBER_SEARCH.findall(line)[0])
-                break
-            
-            lines = list(islice(f, ngeom, ngeom+natom)) 
-            element = [x.split()[0] for x in lines]
-            geom = [list(map(float,x.split()[1:4])) for x in lines]
-            #print geom
-
-        with open(inp_file_name, 'w') as f:
-            f.write('#input for soc in atomic basis\n')
-            for k in keywords:
-                f.write('{}  '.format(k))
-            f.write('\n')
-            f.write('#\n')
-            for i, xyz in enumerate(geom):
-                f.write('{:<4}{:>15.5f}{:>15.5f}{:>15.5f}{:>7.2f}\n'
-                      .format(element[i], xyz[0], xyz[1], xyz[2], soc_scale))
-            f.write('End')
-               
-        ###build basis set 
-        with open(basis_file_name, 'w') as fw:
-            for i, el in enumerate(element):
-                #bas_f = self.fitted_basis_directory+'/'+el+'.basis'
-                bas_f = Path(self.fitted_basis_directory, el + '.basis')
-                #print "bas_f", bas_f
-                with open(bas_f, 'r') as fr:
-                    lines = fr.readlines()
-                    fw.writelines(lines)
-                if i != natom-1:
-                    fw.write(' ****\n')
-                else:
-                    fw.write('END')
-
-
-        self.CI_coefficients = CI_coefficients
-        
-        # Return the filenames we wrote.
         return (inp_file_name, basis_file_name, AO_basis_file_name)
+    
