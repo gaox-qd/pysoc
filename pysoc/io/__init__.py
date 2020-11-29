@@ -1,4 +1,4 @@
-from .main import Output_parser
+from pysoc.io.molsoc import Molsoc
 from .gaussian import Gaussian_parser
 from .dftb_plus import DFTB_plus_parser
 

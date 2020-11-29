@@ -8,19 +8,21 @@
 
 # General imports.
 import sys
-import subprocess
 import tempfile
 import argparse
 from pathlib import Path
+from tabulate import tabulate
 
 # Set path to molsoc.
-molsoc_path = '/home/oliver/ownCloud/Chemistry/St. Andrews PhD/PySOC/PySOC Src/bin/molsoc0.1.exe'
+#molsoc_path = '/home/oliver/ownCloud/Chemistry/St. Andrews PhD/PySOC/PySOC Src/bin/molsoc0.1.exe'
 
 # PySOC imports.
 import pysoc
-from pysoc.io.file import read_file, write_file
 from pysoc.io.gaussian import Gaussian_parser
 from pysoc.io.dftb_plus import DFTB_plus_parser
+from pysoc.io.soc_td import Soc_td
+import io
+import csv
 
 # Program setup.
 
@@ -38,6 +40,7 @@ def main(
         output = None,
         include_ground = None,
         CI_coefficient_threshold = None,
+        print_csv = None,
         **aux_files):
     """
     Main program function for PySOC controller program.
@@ -59,6 +62,9 @@ def main(
         
     if CI_coefficient_threshold is None:
         CI_coefficient_threshold = 1.0e-5
+        
+    if print_csv is None:
+        print_csv = False
     
     # First, get a temp dir if we need one.
     with tempfile.TemporaryDirectory() as tempdir:
@@ -80,126 +86,63 @@ def main(
     
         # Now we need to parse the output from our QM program.
         # Get an appropriate parser.
-        #parser = parser_from_program(QM_program)
         if QM_program == 'Gaussian':
             # Get our calculation parser.
-            #parser = Gaussian_parser(qm_out[0], qm_out[1], num_singlets, num_triplets)
-            parser = Gaussian_parser.from_output_files(calc_file, requested_singlets = singlets, requested_triplets = triplets, **aux_files)
-            #parser.parse()
+            molsoc = Gaussian_parser.from_output_files(calc_file, requested_singlets = singlets, requested_triplets = triplets, **aux_files)
             
             # Keywords for molsoc
             keywords = ('ANG', 'Zeff', 'DIP')
-            
-            #molsoc_input_file = parser.prepare_molsoc_input(keywords, SOC_scale, output)[0]
         
         elif QM_program == 'DFTB+':
             # Get our calculation parser.
-            parser = DFTB_plus_parser.from_output_files(calc_file, requested_singlets = singlets, requested_triplets = triplets, **aux_files)
+            molsoc = DFTB_plus_parser.from_output_files(calc_file, requested_singlets = singlets, requested_triplets = triplets, **aux_files)
             
             # Keywords for molsoc
             keywords = ('ANG', 'Zeff', 'DIP', 'TDB')
-            
-            #parser.parse(qm_out, keywords, SOC_scale, molsoc_input, geom_xyz, dir_para_basis)
-            #molsoc_input_file = parser.prepare_molsoc_input(keywords, SOC_scale, output)[0]
         
         else:
             # We were given something random.
             raise Exception("Unknown or unrecognised program name '{}'".format(QM_program))
         
+        # Parse and prepare input for molsoc.
+        molsoc.parse()
+        molsoc.prepare(keywords, SOC_scale, output)
+        # Run molsoc.
+        molsoc.run()
         
-        # Parse and prepare.
-        parser.parse()
-        molsoc_input_file = parser.prepare_molsoc_input(keywords, SOC_scale, output)[0]
         
         
-        ########################################################################
-        #save file on disk
-        write_file(parser.MO_energies, Path(output, 'mo_ene.dat'), '{}  ')
-        write_file(parser.MOA_coefficients, Path(output, 'mo_coeff.dat'), '{}  ')
-        write_file(parser.AO_overlaps, Path(output, 'ao_overlap.dat'), '{}  ')
-        write_file(parser.CI_coefficients, Path(output, 'ci_coeff.dat'), '{}  ')
+        # Prepare input for soc_td.
+        soc_td = Soc_td(molsoc)
+        soc_td.prepare(keywords, include_ground, CI_coefficient_threshold)
         
-        ########################################################################
-        
-#         molsoc_retval = subprocess.call([molsoc_path, molsoc_input_file])
-#         if molsoc_retval != 0:
-#             raise Exception("molsoc failed with error code {}".format(molsoc_retval))
-        subprocess.run(
-            (molsoc_path, molsoc_input_file.resolve()),
-            check = True,
-            universal_newlines = True,
-            cwd = output
-        )
-        
-        if QM_program == 'DFTB+':
-            nt = parser.ao_ncart[0] **2
-        else:
-            nt = parser.num_orbitals **2
-            
-        soint = []
-        hso = dict(hso_x='X COMPONENT', hso_y='Y COMPONENT', hso_z='Z COMPONENT')
-        for i, cont0 in sorted(hso.items()):
-            hso[i] = read_file(Path(output, 'soint'), cont0, nt, 0)
-            hso[i] = [cont1 for k, cont1 in enumerate(hso[i]) if (k-2)%3==0]
-            #soint = soint + hso[i] + ['\n']
-            soint = soint + hso[i] 
-        
-        write_file(soint, Path(output, 'soc_ao.dat'), '{}  ')
-        #print hso['hso_z']
-        #print f_num.findall(hso_x)
-        ########################################################################
-        s_matr = read_file(Path(output, 'molsoc_overlap.dat'), 'AO_overlap', nt, 0)
-        write_file(s_matr, Path(output, 's_matr.dat'), '{}  ')
-        ########################################################################
-        #read dipole moment on atomic basis
-        dipole_flag = ['False']
-        if 'DIP' in keywords:
-            dipole_flag = ['True']
-            dipint = []
-            dip = dict(dip_x='DIM=1', dip_y='DIM=2', dip_z='DIM=3')
-            for i, cont0 in sorted(dip.items()):
-                dip[i] = read_file(Path(output, 'molsoc_dipole.dat'), cont0, nt, 0)
-                #dipint = dipint + dip[i] + ['\n']
-                dipint = dipint + dip[i] 
-        
-        write_file(dipint, Path(output, 'dip_ao.dat'), '{}  ')
-        ########################################################################
-        #td soc
-        #
-        
-        dat_out = dict(a0_code = ["gauss_tddft" if  QM_program == "Gaussian" else "tddftb"],
-                       a0_dipole = dipole_flag,
-                       a0_num_g = ["True" if include_ground else "False"], 
-                       a0_thresh = [CI_coefficient_threshold],
-                       a0_total_s = [len(parser.requested_singlets)],
-                       a1_num_s = parser.requested_singlets,
-                       a1_order_s = parser.singlet_levels,
-                       a2_ene_s = parser.singlet_energies,
-                       a0_total_t = [len(parser.requested_triplets)], 
-                       b1_num_t = parser.requested_triplets,
-                       b1_order_t = parser.triplet_levels,
-                       b2_ener_t = parser.triplet_energies, 
-                       c_num_bov = [parser.num_orbitals, parser.num_occupied_orbitals, parser.num_virtual_orbitals])
-        if QM_program == 'DFTB+':
-            dat_out.update({'d_basis_ncart': parser.ao_ncart}) 
-        
-        with open(Path(output, 'soc_td_input.dat'), 'w') as f:
-            for i, line in sorted(dat_out.items()):
-                for k in line:
-                    f.write('{:<15}'.format(k))
-                f.write('{:>4}\n'.format(i))
         
         # Now call soc_td.
-        subprocess.run(
-            ("soc_td",),
-            cwd = output,
-            check = True,
-            universal_newlines =True
-        )
+        soc_td.run()
         
-        # Finally, read and output the SOC values.
-        with open(Path(output, "soc_out.dat"), "r") as soc_file:
-            print(soc_file.read())
+        # Finally, output results depending on requested format.
+        if print_csv:
+            # CSV.
+            string_file = io.StringIO()
+            
+            # Get our CSV writer.
+            writer = csv.writer(string_file)
+            
+            # Write.
+            writer.writerows(soc_td.table)
+            output_string = string_file.getvalue()
+        else:
+            # Text table.
+            output_string = tabulate(
+                soc_td.table,
+                headers = "firstrow",
+                numalign = "decimal",
+                stralign = "center",
+                floatfmt = "7.4f"
+            )
+            
+        # Print.
+        print(output_string)
 
 
 # If we've been invoked as a program, call main().    
@@ -213,6 +156,7 @@ if __name__ == '__main__':
     parser.add_argument("calc_file", help = "QM calculation output file to calculate SOC from", type = str)
     #parser.add_argument("-s", "--singlets", dest = "singlets", help = "The singlet excited states to calculate SOC for (eg, '-s 1 2 3' to calculate SOC for S1, S2 and S3).", type = int, nargs = "*", default = ())
     #parser.add_argument("-t", "--triplets", dest = "triplets", help = "The triplet excited states to calculate SOC for.", type = int, nargs = "*", default = ())
+    parser.add_argument("-c", "--CSV", dest = "print_csv", help = "Output in CSV format", action = "store_true")
     parser.add_argument("-s", "--singlets", dest = "num_singlets", help = "The number of singlet excited states to calculate SOC for. The default is all available states.", type = int, default = None)
     parser.add_argument("-t", "--triplets", dest = "num_triplets", help = "The number of triplet excited states to calculate SOC for. The default is all available states.", type = int, default = None)
     parser.add_argument("-p", "--program", dest = "QM_program", help = "The QM program that the excited states were calculated with. If None is given, the program will be guessed from the given calc_file.", choices = ["Gaussian", "DFTB+"], default = None)
@@ -222,6 +166,7 @@ if __name__ == '__main__':
     parser.add_argument("-C", "--CI_threshold", dest = "CI_coefficient_threshold", help = "Threshold for CI (CIS) coefficients.", type = float, default = None)    
     parser.add_argument("-v", "--version", action = "version", version = str(pysoc.version))
     
+    # Call the main function, passing command line arguments as keyword arguments.
     sys.exit(
         main(
             **vars(parser.parse_args())

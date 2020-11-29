@@ -1,10 +1,9 @@
-from itertools import islice
 import pkg_resources
 from pathlib import Path
 
-from pysoc.io import Output_parser
+from pysoc.io import Molsoc
 
-class DFTB_plus_parser(Output_parser):
+class DFTB_plus_parser(Molsoc):
     """
     Class for parsing the required output from Gaussian.
     """
@@ -45,6 +44,8 @@ class DFTB_plus_parser(Output_parser):
         :param requested_triplets: The number of triplet states to calculate with PySOC (should be no greater than the number of triplet states calculated with DFTB+).
         :param fitted_basis_directory: Path to the directory containing GTO fitted basis sets. If none is given, a default fitted mio-1-1 set is used.
         """
+        super().__init__(requested_singlets, requested_triplets)
+        
         self.xyz_file_name = xyz_file_name
         self.band_file_name = band_file_name
         self.excitations_file_name = excitations_file_name
@@ -53,38 +54,6 @@ class DFTB_plus_parser(Output_parser):
         self.x_plus_y_file_name = x_plus_y_file_name
         self.SPX_file_name = SPX_file_name
         self.fitted_basis_directory = fitted_basis_directory
-        self.requested_singlets = requested_singlets
-        self.requested_triplets = requested_triplets
-        
-        # Init attributes.
-        # Orbital information.
-        self.num_orbitals = 0
-        self.num_occupied_orbitals = 0
-        self.num_virtual_orbitals = 0
-
-        # List of MO energies.
-        self.MO_energies = []
-        
-        # Lists of triplet and singlet energies. Each item is an iterable where the first item is the level (1, 2, 3 etc), and the second the energy (in eV).
-        self.singlet_states = []
-        self.triplet_states = []
-        
-        # List of atomic orbital overlaps (not really sure what the format of this is).
-        self.AO_overlaps = []
-        
-        # ao_basis is a list of len() == 2 iterables, where the first item is a shell label (S, P, SP etc), and the second is the corresponding occupancy? (1, 3, 4 etc).
-        # Not sure what the purpose of ao_basis is.
-        self.ao_basis = []
-        
-        # Alpha and beta MO coefficients.
-        self.MOA_coefficients = []
-        self.MOB_coefficients = []
-        
-        # List of CI coefficients (configuration interaction coefficients?)
-        self.CI_coefficients = []
-        
-        # This is a list of iterables of the form [element, x_coord, y_coord, z_coord]
-        self.geometry = []
         
     @classmethod
     def from_output_files(self,
@@ -117,7 +86,16 @@ class DFTB_plus_parser(Output_parser):
             SPX_file_name =             SPX_file_name               if SPX_file_name is not None else               xyz_file_name.with_name("SPX.DAT"),
             **kwargs
         )
+    
+    @property
+    def num_transitions(self):
+        """
+        The number of transitions.
         
+        This property may be misnamed (it was simply named 'nt' in the original code...)
+        """
+        return self.ao_ncart[0] **2
+    
     @classmethod
     def from_output_file(self, *args, **kwargs):
         """
@@ -357,23 +335,4 @@ class DFTB_plus_parser(Output_parser):
                 else:
                     basis_file.write('END')
     
-    def prepare_molsoc_input(self, keywords, soc_scale, output):
-        """
-        Parse the output from DFTB+.
-        
-        This section has not yet been fully updated...
-        """
-        # Now write our molsoc file.
-        inp_file_name = Path(output, "molsoc.inp")
-        self.write_molsoc_input(keywords, soc_scale, inp_file_name)
-        
-        # Write molsoc basis set file.
-        basis_file_name = Path(output, "molsoc_basis")
-        self.write_molsoc_basis(basis_file_name)
-                    
-        # Now write the strange ao_basis.dat.
-        AO_basis_file_name = Path(output, "ao_basis.dat")
-        self.write_AO_basis(AO_basis_file_name)
-        
-        return (inp_file_name, basis_file_name, AO_basis_file_name)
     

@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 import subprocess
 
-from pysoc.io import Output_parser
+from pysoc.io import Molsoc
 
 '''read the output from QM calculation for the:
    a. # of basis set, virt orb, occ orb
@@ -111,11 +111,10 @@ class RWF_parser():
         
         # This header has the format: Dump of file   xxxx length         xxxx (read left to right):
         #                                                                ^^^^
-        
         return int(header.split()[5])
 
 
-class Gaussian_parser(Output_parser):
+class Gaussian_parser(Molsoc):
     """
     Class for parsing the required output from Gaussian.
     """
@@ -132,33 +131,19 @@ class Gaussian_parser(Output_parser):
         :param requested_singlets: A list of singlet excited states to calculate SOC for.
         :param requested_triplets: A list of triplet excited states to calculate SOC for.
         """
+        super().__init__(requested_singlets, requested_triplets)
+        
         # Save our input files.
         self.log_file_name = log_file_name
         self.rwf_file_name = rwf_file_name
         
-        self.requested_singlets = requested_singlets
-        self.requested_triplets = requested_triplets
-        
         # Init attributes.
-        # Orbital information.
-        self.num_orbitals = 0
-        self.num_occupied_orbitals = 0
-        self.num_virtual_orbitals = 0
         # Not totally clear on what this one means. Given by NFC= num in output.
         self.num_frozen_orbitals = 0
-        # List of MO energies.
-        self.MO_energies = []
-        
-        # Lists of triplet and singlet energies. Each item is an iterable where the first item is the level (1, 2, 3 etc), and the second the energy (in eV).
-        self.singlet_states = []
-        self.triplet_states = []
         
         # The line number (starting from 0) on which geometry info begins.
         self.geometry_start_line = None
         self.num_atoms = 0
-        # The actual geometry section; atomic numbers and coords.
-        # This is a list of iterables of the form [element, x_coord, y_coord, z_coord]
-        self.geometry = []
         
         # Like geometry_start_line, but for atomic orbital basis sets.
         self.basis_set_start_line = None
@@ -166,19 +151,6 @@ class Gaussian_parser(Output_parser):
         # A list of basis set information. This is cut out from a Gaussian log file without modification.
         self.basis_set = []
         
-        # ao_basis is a list of len() == 2 iterables, where the first item is a shell label (S, P, SP etc), and the second is the corresponding occupancy? (1, 3, 4 etc).
-        # Not sure what the purpose of ao_basis is.
-        self.ao_basis = []
-        
-        # Alpha and beta MO coefficients.
-        self.MOA_coefficients = []
-        self.MOB_coefficients = []
-        
-        # List of atomic orbital overlaps (not really sure what the format of this is).
-        self.AO_overlaps = []
-        
-        # List of CI coefficients (configuration interaction coefficients?)
-        self.CI_coefficients = []
     
     @classmethod
     def from_output_files(self, log_file_name, *, rwf_file_name = None, **kwargs):
@@ -358,30 +330,6 @@ class Gaussian_parser(Output_parser):
                 
         # Get data from the rwf file.
         self.parse_RWF()
-
-                    
-    def prepare_molsoc_input(self, keywords, soc_scale, output):
-        """
-        Prepare input files for molsoc.
-        
-        :param keywords: List of molsoc keywords (strings).
-        :param soc_scale: Scaling factor for Zeff.
-        :param output: Path to a directory to write molsoc files.
-        :return: A tuple of paths to the files written (molsoc.inp, molsoc_basis, ao_basis.dat)
-        """
-        # Now write our molsoc file.
-        inp_file_name = Path(output, "molsoc.inp")
-        self.write_molsoc_input(keywords, soc_scale, inp_file_name)
-        
-        # Write molsoc basis set file.
-        basis_file_name = Path(output, "molsoc_basis")
-        self.write_molsoc_basis(basis_file_name)
-                    
-        # Now write the strange ao_basis.dat.
-        AO_basis_file_name = Path(output, "ao_basis.dat")
-        self.write_AO_basis(AO_basis_file_name)
-        
-        return (inp_file_name, basis_file_name, AO_basis_file_name)
     
     @property
     def num_AO_overlaps(self):

@@ -1,6 +1,10 @@
 import re
+from pathlib import Path
+import subprocess
+import pysoc
+from logging import getLogger
 
-class Output_parser(object):
+class Molsoc(object):
     """
     Abstract class for output parsers.
     """
@@ -9,12 +13,60 @@ class Output_parser(object):
     # Don't understand the purpose of the boolean or here...
     NUMBER_SEARCH = re.compile(r'[-+]?\d*\.\d+|\d+')
     
+    MOLSOC_PATH = 'molsoc'
+    
+    def __init__(self,requested_singlets, requested_triplets):
+        """
+        """
+        self.requested_singlets = requested_singlets
+        self.requested_triplets = requested_triplets
+        
+        # Orbital information.
+        self.num_orbitals = 0
+        self.num_occupied_orbitals = 0
+        self.num_virtual_orbitals = 0
+        
+        # List of MO energies.
+        self.MO_energies = []
+        
+        # Lists of triplet and singlet energies. Each item is an iterable where the first item is the level (1, 2, 3 etc), and the second the energy (in eV).
+        self.singlet_states = []
+        self.triplet_states = []
+        
+        # This is a list of iterables of the form [element, x_coord, y_coord, z_coord]
+        self.geometry = []
+        
+        # List of atomic orbital overlaps (not really sure what the format of this is).
+        self.AO_overlaps = []
+        
+        # List of CI coefficients (configuration interaction coefficients?)
+        self.CI_coefficients = []
+        
+        # Alpha and beta MO coefficients.
+        self.MOA_coefficients = []
+        self.MOB_coefficients = []
+        
+        # ao_basis is a list of len() == 2 iterables, where the first item is a shell label (S, P, SP etc), and the second is the corresponding occupancy? (1, 3, 4 etc).
+        # Not sure what the purpose of ao_basis is.
+        self.ao_basis = []
+        
+        self.output = None
+    
     @property
     def ndim(self):
         """
         The product of the number of occupied and virtual orbitals.
         """
         return self.num_occupied_orbitals * self.num_virtual_orbitals
+    
+    @property
+    def num_transitions(self):
+        """
+        The number of transitions.
+        
+        This property may be misnamed (it was simply named 'nt' in the original code...)
+        """
+        return self.num_orbitals **2
     
     @property
     def ao_basis_sum(self):
@@ -91,21 +143,6 @@ class Output_parser(object):
         return [self.triplet_states[i-1][0] for i in self.requested_triplets]
     
     
-    def write_AO_basis(self, file_name = "ao_basis.dat"):
-        """
-        Write the atomic orbital basis file.
-        
-        :param file_name: The file name to write to.
-        """
-        with open(file_name, 'w') as ao_basis_file:
-            # First write the number of different subshells and also the total number of atomic orbitals.
-            ao_basis_file.write('{}  {}\n'.format(len(self.ao_basis), self.ao_basis_sum))
-            
-            # Now write the 'number' of each subshell.
-            for atomic_orbital in self.ao_basis:
-                #ao_basis_file.write('{}  '.format(atomic_orbital[1]))
-                ao_basis_file.write('{}  '.format(atomic_orbital))
-    
     def write_molsoc_basis(self, file_name = "molsoc_basis"):
         """
         Write the molsoc basis input file.
@@ -150,3 +187,51 @@ class Output_parser(object):
             
             # Finally, end with the 'End' keyword.
             inp_file.write("End\n")
+            
+    def prepare(self, keywords, soc_scale, output):
+        """
+        Prepare input files for molsoc.
+        
+        :param keywords: Molsoc keywords go be written the main input file.
+        :param soc_scale: Scaling factor for Zeff.
+        :param output: Path to a directory where input files will be written.
+        """
+        self.output = output
+        
+        # Now write our molsoc file.
+        self.inp_file_name = Path(output, "molsoc.inp")
+        self.write_molsoc_input(keywords, soc_scale, self.inp_file_name)
+        
+        # Write molsoc basis set file.
+        self.basis_file_name = Path(output, "molsoc_basis")
+        self.write_molsoc_basis(self.basis_file_name)
+                    
+    
+    
+    def run(self):
+        """
+        Run molsoc.
+        
+        prepare() should be called before this method.
+        """
+        
+        # Run molsoc.
+        try:
+            subprocess.run(
+                (self.MOLSOC_PATH, self.inp_file_name.resolve()),
+                check = True,
+                universal_newlines = True,
+                cwd = self.inp_file_name.parent,
+                stdout = subprocess.PIPE,
+                stderr = subprocess.STDOUT
+            )
+        except subprocess.CalledProcessError as e:
+            # Error running molsoc.
+            getLogger(pysoc.logger_name).error("An error occurred in the molsoc subprogram. Dumping output:\n".format(e.stdout))
+            raise e
+            
+        
+        
+        
+        
+        
