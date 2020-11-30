@@ -156,6 +156,7 @@ if __name__ == '__main__':
     parser.add_argument("calc_file", help = "QM calculation output file to calculate SOC from", type = str)
     #parser.add_argument("-s", "--singlets", dest = "singlets", help = "The singlet excited states to calculate SOC for (eg, '-s 1 2 3' to calculate SOC for S1, S2 and S3).", type = int, nargs = "*", default = ())
     #parser.add_argument("-t", "--triplets", dest = "triplets", help = "The triplet excited states to calculate SOC for.", type = int, nargs = "*", default = ())
+    parser.add_argument("--rwf_file", dest = "rwf_file_name", help = "Gaussian .rwf file. If this is not given explicitly, the location of this file will be guessed from the given QM calculation output file.", default = None, type = str)
     parser.add_argument("-c", "--CSV", dest = "print_csv", help = "Output in CSV format", action = "store_true")
     parser.add_argument("-s", "--singlets", dest = "num_singlets", help = "The number of singlet excited states to calculate SOC for. The default is all available states.", type = int, default = None)
     parser.add_argument("-t", "--triplets", dest = "num_triplets", help = "The number of triplet excited states to calculate SOC for. The default is all available states.", type = int, default = None)

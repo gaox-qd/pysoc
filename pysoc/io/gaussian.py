@@ -39,7 +39,7 @@ class RWF_parser():
         
         :param rwf_file_name: A file to read from. Both .rwf and .chk files are supported.
         """
-        self.rwf_file_name = rwf_file_name
+        self.rwf_file_name = Path(rwf_file_name)
         
     def get_section(self, code):
         """
@@ -56,7 +56,14 @@ class RWF_parser():
         :param code: A code identifying a section to extract.
         :return: A tuple of the 'Dump of file' line followed by a list of lines.
         """
-        dumped_data =  str(subprocess.check_output([self.RWFDUMP, self.rwf_file_name, "-", code], universal_newlines = True)).split("\n")
+        try:
+            dumped_data =  str(subprocess.check_output([self.RWFDUMP, self.rwf_file_name, "-", code], universal_newlines = True)).split("\n")
+        except subprocess.CalledProcessError:
+            # rwfdump failed to run, check to see if the given .rwf file actually exists.
+            if not self.rwf_file_name.exists():
+                raise Exception("Required Gaussian .rwf file '{}' does not exist".format(self.rwf_file_name))
+            else:
+                raise
                 
         # Find start line and remove everything before.
         try:
