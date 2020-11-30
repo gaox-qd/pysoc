@@ -316,6 +316,10 @@ class Gaussian_parser(Molsoc):
                 # Split up the line.
                 parts = basis_set_line.split()
                 
+                if len(parts) == 0:
+                    # Empty line.
+                    continue
+                
                 # If the line starts with 'S', 'P', 'SP' etc, then it identifies a new subshell (?).
                 # We keep track of all subshells for ao_basis (I think because molsoc needs it for orbital filling, could be wrong).
                 if parts[0] in self.SHELLS:
