@@ -1,0 +1,43 @@
+Geometry = GenFormat {
+  <<< "ch2o.gen"
+}
+
+Driver = {}
+
+Hamiltonian = DFTB {
+  SCC = Yes
+  SCCTolerance = 1e-10  # Very tight for test purposes only
+  MaxAngularMomentum = {
+    H  = "s"
+    C  = "p"
+    O  = "p"
+  }
+  SlaterKosterFiles = Type2FileNames {
+    Prefix = "/fsnfs/users/xinggao/work/gsh/thiothymine/gtsh/test_python/tddftb/sk/mio-1-1/"
+    Separator = "-"
+    Suffix = ".skf"
+  }
+  LinearResponse { 
+    NrOfExcitations = 10
+    StateOfInterest = 0
+    Symmetry = both
+    HubbardDerivatives {
+      H  = 0.347100   0.491900 
+      C  = 0.341975   0.387425 
+      O  = 0.467490   0.523300
+    }
+    WriteTransitions = Yes
+    WriteTransitionDipole = Yes
+    WriteXplusY = Yes
+  }
+}
+
+Options {
+  WriteEigenvectors = Yes
+  WriteHS = Yes
+}
+
+ParserOptions {
+  ParserVersion = 4
+}
+
