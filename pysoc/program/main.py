@@ -8,21 +8,15 @@
 
 # General imports.
 import sys
-import tempfile
 import argparse
 from pathlib import Path
 from tabulate import tabulate
-
-# Set path to molsoc.
-#molsoc_path = '/home/oliver/ownCloud/Chemistry/St. Andrews PhD/PySOC/PySOC Src/bin/molsoc0.1.exe'
+import io
+import csv
 
 # PySOC imports.
 import pysoc
-from pysoc.io.gaussian import Gaussian_parser
-from pysoc.io.dftb_plus import DFTB_plus_parser
-from pysoc.io.soc_td import Soc_td
-import io
-import csv
+from pysoc.io.SOC import Calculator
 
 # Program setup.
 
@@ -52,99 +46,35 @@ def main(
     :param soc_scale: Scaling factor for Zeff.
     :param output: Path to a directory where intermediate files will be written. If none is given, a temporary directory will be used (in which case these intermediate files will be unavailable to the user).
     """
-    # TODO: Because of issue #1, we don't allow selecting exact singlets/triplets, we just ask how many.
-    singlets = list(range(1, num_singlets +1)) if num_singlets is not None else None
-    triplets = list(range(1, num_triplets +1)) if num_triplets is not None else None
+    # Get our controlling object.
+    SOC = Calculator(calc_file = calc_file, num_singlets = num_singlets, num_triplets = num_triplets, QM_program = QM_program)
     
-    # Set defaults if not given.
-    if include_ground is None:
-        include_ground = True
-        
-    if CI_coefficient_threshold is None:
-        CI_coefficient_threshold = 1.0e-5
-        
-    if print_csv is None:
-        print_csv = False
+    # Compute SOC.
+    SOC.calculate(output = output, SOC_scale = SOC_scale, include_ground = include_ground, CI_coefficient_threshold = CI_coefficient_threshold)
     
-    # First, get a temp dir if we need one.
-    with tempfile.TemporaryDirectory() as tempdir:
-        # Only use if necessary.
-        if output is None:
-            output = tempdir
-            
-        # If we weren't told what QM_program to use, guess from the calc_file.
-        calc_file = Path(calc_file)
-        if QM_program is None:
-            # Try and guess from the input file type.
-            if calc_file.suffix.lower() == ".log":
-                QM_program = "Gaussian"
-            elif calc_file.suffix.lower() == ".xyz":
-                QM_program = "DFTB+"
-            else:
-                raise Exception("Could not guess input program type from file '{}'; try specifying explicitly with '--program'".format(calc_file))
-            
-        # Remove any aux_files that are None.
-        aux_files = {key:aux_files[key] for key in aux_files if aux_files[key] is not None}
-    
-        # Now we need to parse the output from our QM program.
-        # Get an appropriate parser.
-        if QM_program == 'Gaussian':
-            # Get our calculation parser.
-            molsoc = Gaussian_parser.from_output_files(calc_file, requested_singlets = singlets, requested_triplets = triplets, **aux_files)
-            
-            # Keywords for molsoc
-            keywords = ('ANG', 'Zeff', 'DIP')
+    # Finally, output results depending on requested format.
+    if print_csv:
+        # CSV.
+        string_file = io.StringIO()
         
-        elif QM_program == 'DFTB+':
-            # Get our calculation parser.
-            molsoc = DFTB_plus_parser.from_output_files(calc_file, requested_singlets = singlets, requested_triplets = triplets, **aux_files)
-            
-            # Keywords for molsoc
-            keywords = ('ANG', 'Zeff', 'DIP', 'TDB')
+        # Get our CSV writer.
+        writer = csv.writer(string_file)
         
-        else:
-            # We were given something random.
-            raise Exception("Unknown or unrecognised program name '{}'".format(QM_program))
+        # Write.
+        writer.writerows(SOC.soc_td.table)
+        output_string = string_file.getvalue()
+    else:
+        # Text table.
+        output_string = tabulate(
+            SOC.soc_td.table,
+            headers = "firstrow",
+            numalign = "decimal",
+            stralign = "center",
+            floatfmt = "7.4f"
+        )
         
-        # Parse and prepare input for molsoc.
-        molsoc.parse()
-        molsoc.prepare(keywords, SOC_scale, output)
-        # Run molsoc.
-        molsoc.run()
-        
-        
-        
-        # Prepare input for soc_td.
-        soc_td = Soc_td(molsoc)
-        soc_td.prepare(keywords, include_ground, CI_coefficient_threshold)
-        
-        
-        # Now call soc_td.
-        soc_td.run()
-        
-        # Finally, output results depending on requested format.
-        if print_csv:
-            # CSV.
-            string_file = io.StringIO()
-            
-            # Get our CSV writer.
-            writer = csv.writer(string_file)
-            
-            # Write.
-            writer.writerows(soc_td.table)
-            output_string = string_file.getvalue()
-        else:
-            # Text table.
-            output_string = tabulate(
-                soc_td.table,
-                headers = "firstrow",
-                numalign = "decimal",
-                stralign = "center",
-                floatfmt = "7.4f"
-            )
-            
-        # Print.
-        print(output_string)
+    # Print.
+    print(output_string)
 
 
 # If we've been invoked as a program, call main().    
