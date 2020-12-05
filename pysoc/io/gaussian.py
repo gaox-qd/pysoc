@@ -284,12 +284,12 @@ class Gaussian_parser(Molsoc):
                 elif 'primitive gaussians' in line:
                     # End of basis set section.
                     self.basis_set_end_line = line_num -1
-                    
+
         # Check we were able to parse as many excited states as were asked.
-        if max(self.requested_singlets) > len(self.singlet_states):
+        if len(self.requested_singlets) > 0 and max(self.requested_singlets) > len(self.singlet_states):
             raise Exception("Unable to parse requested singlet excited state num {}; only found {} singlets".format(max(self.requested_singlets), len(self.singlet_states)))
         
-        if max(self.requested_triplets) > len(self.triplet_states):
+        if len(self.requested_triplets) > 0 and max(self.requested_triplets) > len(self.triplet_states):
             raise Exception("Unable to parse requested triplet excited state num {}; only found {} triplets".format(max(self.requested_triplets), len(self.triplet_states)))
                     
         # We open our .log file again to start reading from the top.
