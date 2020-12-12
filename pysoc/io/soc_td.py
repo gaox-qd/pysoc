@@ -29,11 +29,12 @@ class SOC():
         self.negative_one = negative_one
         
     @classmethod
-    def from_soc_td(self, soc_td_line):
+    def from_soc_td(self, soc_td_line, molsoc):
         """
         Create a SOC class from the output produced by soc_td.
         
         :param soc_td_line: A line of output from the soc_out.dat file.
+        :param molsoc: The molsoc parser.
         """
         # Split on whitespace.
         parts = soc_td_line.split()
@@ -43,6 +44,13 @@ class SOC():
         
         singlet_state = identifier[0][1:]
         triplet_state = identifier[2].split(",")[0]
+        
+        # Get the number of each state from S(***) or T(***)
+        singlet_num = int(singlet_state[2:-1])
+        triplet_num = int(triplet_state[2:-1])
+        
+        #singlet_level = molsoc.singlet_levels[singlet_num-1] if singlet_num > 0 else None
+        #triplet_level = molsoc.triplet_levels[triplet_num-1] if triplet_num > 0 else None
         
         # Use our normal constructor.
         return self(singlet_state, triplet_state, float(parts[4]), float(parts[5]), float(parts[6]))
@@ -196,7 +204,7 @@ class Soc_td():
         # Next read the soc output file and parse.
         with open(Path(self.molsoc.output, "soc_out.dat"), "r") as soc_file:
             # Parse each line.
-            self.SOC = [SOC.from_soc_td(soc_td_line) for soc_td_line in soc_file]
+            self.SOC = [SOC.from_soc_td(soc_td_line, self.molsoc) for soc_td_line in soc_file]
                 
 
     @property

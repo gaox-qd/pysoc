@@ -96,7 +96,10 @@ class Calculator():
                 output = tempdir
                 
             # Parse and prepare input for molsoc.
-            self.molsoc.parse()
+            try:
+                self.molsoc.parse()
+            except Exception as e:
+                raise Exception("Failed to parse QM output file") from e
             self.molsoc.prepare(self.keywords, SOC_scale, output)
             
             # Run molsoc.

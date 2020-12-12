@@ -71,8 +71,8 @@ module soc_state
         !write(*, 1717) (soc_statint(si, k, 3), k=1,input%n_tripl)
       enddo
     endif
-    1715 format('sum_soc, ','<S',I0,'|Hso|T',I0,',1,0,-1> (cm-1): ',4f15.5)
-    1716 format('sum_soc, ','<S',I0,'|Hso|T',I0,',1,0,-1> (cm-1): ',7f15.5)  
+    1715 format('sum_soc, ','<S(',I0,')|Hso|T(',I0,'),1,0,-1> (cm-1): ',4f15.5)
+    1716 format('sum_soc, ','<S(',I0,')|Hso|T(',I0,'),1,0,-1> (cm-1): ',7f15.5)  
     1717 format(50f15.5)  
     close(17)   
      
