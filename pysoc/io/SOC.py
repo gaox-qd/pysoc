@@ -94,6 +94,9 @@ class Calculator():
             # Only use if necessary.
             if output is None:
                 output = tempdir
+            else:
+                # Try and make the output dir.
+                output.mkdir(exist_ok = True)
                 
             # Parse and prepare input for molsoc.
             try:
