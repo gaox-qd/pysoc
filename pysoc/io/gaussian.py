@@ -4,8 +4,10 @@ from itertools import islice
 from pathlib import Path
 import re
 import subprocess
+import periodictable
 
 from pysoc.io import Molsoc
+import cclib
 
 '''read the output from QM calculation for the:
    a. # of basis set, virt orb, occ orb
@@ -294,16 +296,20 @@ class Gaussian_parser(Molsoc):
                     
         # We open our .log file again to start reading from the top.
         with open(self.log_file_name, 'r') as log_file:
-            # Cut out the geometry section.
-            geometry_section = list(islice(log_file, self.geometry_start_line, self.geometry_start_line + self.num_atoms))
+            ccdata = cclib.io.ccread(log_file)
+            self.geometry = [[str(periodictable.elements[proton_num]), coord[0], coord[1], coord[2]] for proton_num, coord in zip(ccdata.atomnos, ccdata.atomcoords[-1])]
             
-            # Split and convert to better types (don't think this is necessary either...)
-            for geometry in geometry_section:
-                # Split on whitespace (into atom symbol and 3 coords)
-                parts = geometry.split()
-                
-                # Add to our geometry list.
-                self.geometry.append([parts[0], float(parts[1]), float(parts[2]), float(parts[3])])    
+            # The geometry we would read by this method is in a different orientation to MOs etc. Use cclib instead.
+#             # Cut out the geometry section.
+#             geometry_section = list(islice(log_file, self.geometry_start_line, self.geometry_start_line + self.num_atoms))
+#             
+#             # Split and convert to better types (don't think this is necessary either...)
+#             for geometry in geometry_section:
+#                 # Split on whitespace (into atom symbol and 3 coords)
+#                 parts = geometry.split()
+#                 
+#                 # Add to our geometry list.
+#                 self.geometry.append([parts[0], float(parts[1]), float(parts[2]), float(parts[3])])    
        
         # Read basis set information.
         with open(self.log_file_name, 'r') as log_file:
