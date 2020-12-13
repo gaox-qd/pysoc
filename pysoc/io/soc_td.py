@@ -188,7 +188,7 @@ class Soc_td():
         """
         # Run soc_td.
         try:
-            subprocess.run(
+            soc_td_done = subprocess.run(
                 ("soc_td",),
                 cwd = self.molsoc.output,
                 check = True,
@@ -198,13 +198,18 @@ class Soc_td():
             )
         except subprocess.CalledProcessError as e:
             # Error running soc_td
-            getLogger(pysoc.logger_name).error("An error occurred in the soc_td subprogram. Dumping output:\n".format(e.stdout))
+            getLogger(pysoc.logger_name).error("An error occurred in the soc_td subprogram. Dumping output:\n{}".format(e.stdout))
             raise e
         
         # Next read the soc output file and parse.
-        with open(Path(self.molsoc.output, "soc_out.dat"), "r") as soc_file:
-            # Parse each line.
-            self.SOC = [SOC.from_soc_td(soc_td_line, self.molsoc) for soc_td_line in soc_file]
+        try:
+            with open(Path(self.molsoc.output, "soc_out.dat"), "r") as soc_file:
+                # Parse each line.
+                self.SOC = [SOC.from_soc_td(soc_td_line, self.molsoc) for soc_td_line in soc_file]
+        except FileNotFoundError:
+            # Couldn't find the output file we need.
+            getLogger(pysoc.logger_name).error("An error occurred in the soc_td subprogram. Dumping output:\n{}".format(soc_td_done.stdout))
+            raise
                 
 
     @property
