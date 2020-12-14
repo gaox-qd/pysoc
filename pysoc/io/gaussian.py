@@ -59,7 +59,18 @@ class RWF_parser():
         :return: A tuple of the 'Dump of file' line followed by a list of lines.
         """
         try:
-            dumped_data =  str(subprocess.check_output([self.RWFDUMP, self.rwf_file_name, "-", code], universal_newlines = True)).split("\n")
+            rwfdump_proc =  subprocess.run(
+                [self.RWFDUMP, self.rwf_file_name.name, "-", code],
+                # Capture both stdout and stderr.
+                stdout = subprocess.PIPE,
+                stderr = subprocess.STDOUT,
+                universal_newlines = True,
+                cwd = str(self.rwf_file_name.parent)
+                )
+            
+            dumped_data = rwfdump_proc.stdout.split("\n")
+            
+            #dumped_data =  str(subprocess.check_output([self.RWFDUMP, self.rwf_file_name, "-", code], universal_newlines = True)).split("\n")
         except subprocess.CalledProcessError:
             # rwfdump failed to run, check to see if the given .rwf file actually exists.
             if not self.rwf_file_name.exists():
