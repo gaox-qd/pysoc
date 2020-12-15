@@ -5,6 +5,7 @@ from logging import getLogger
 import scipy.constants
 
 import pysoc
+import pkg_resources
 
 class Molsoc(object):
     """
@@ -15,7 +16,14 @@ class Molsoc(object):
     # Don't understand the purpose of the boolean or here...
     NUMBER_SEARCH = re.compile(r'[-+]?\d*\.\d+|\d+')
     
-    MOLSOC_PATH = 'molsoc'
+    #MOLSOC_PATH = 'molsoc'
+    
+    @property
+    def MOLSOC_PATH(self):
+        """
+        Path to the molsoc executable.
+        """
+        return Path(pkg_resources.resource_filename('pysoc', 'data/bin/molsoc'))
     
     def __init__(self,requested_singlets, requested_triplets):
         """

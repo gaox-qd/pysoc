@@ -11,8 +11,8 @@ class DFTB_plus_parser(Molsoc):
     # Recognised orbital labels.
     ORBITALS = ['s1', 'p1', 'p2', 'p3', 'd1', 'd2', 'd3', 'd4', 'd5', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'f7']
 
-    @classmethod
-    def get_default_fitted_basis(self):
+    @property
+    def default_fitted_basis(self):
         """
         Default path to our fitted basis set dir.
         """
@@ -109,7 +109,7 @@ class DFTB_plus_parser(Molsoc):
         Path to the fitted basis set directory.
         """
         fitted_basis_directory = getattr(self, "_fitted_basis_directory")
-        return fitted_basis_directory if fitted_basis_directory is not None else self.get_default_fitted_basis()
+        return fitted_basis_directory if fitted_basis_directory is not None else self.default_fitted_basis
     
     @fitted_basis_directory.setter
     def fitted_basis_directory(self, value):

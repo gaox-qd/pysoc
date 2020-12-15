@@ -6,6 +6,7 @@ import subprocess
 from logging import getLogger
 import pysoc
 import math
+import pkg_resources
 
 class SOC():
     """
@@ -85,6 +86,13 @@ class Soc_td():
     """
     Class for managing the Soc_td program.
     """
+    
+    @property
+    def SOC_TD_PATH(self):
+        """
+        Path to the molsoc executable.
+        """
+        return Path(pkg_resources.resource_filename('pysoc', 'data/bin/soc_td'))
     
     def __init__(self, molsoc):
         """
@@ -189,7 +197,7 @@ class Soc_td():
         # Run soc_td.
         try:
             soc_td_done = subprocess.run(
-                ("soc_td",),
+                (self.SOC_TD_PATH,),
                 cwd = self.molsoc.output,
                 check = True,
                 universal_newlines = True,
