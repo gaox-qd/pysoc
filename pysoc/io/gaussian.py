@@ -247,12 +247,7 @@ class Gaussian_parser(Molsoc):
             # Iterate through each line in the file.
             for line_num, line in enumerate(log_file):
                 
-                # Look out for specific strings that contain required info.
-                if all(s in line for s in ['Charge','Multiplicity']):
-                    # Geometry section.
-                    self.geometry_start_line = line_num + 1
-                    
-                elif 'NAtoms=' in line:
+                if 'NAtoms=' in line:
                     # The number of atoms.
                     self.num_atoms = int(line.split()[1])
                     
@@ -274,22 +269,6 @@ class Gaussian_parser(Molsoc):
                     self.num_occupied_orbitals = int(parts[3])
                     self.num_virtual_orbitals = int(parts[7])
                     
-                elif all(s in line for s in ['Excited State','Triplet']):
-                    # Triplet excited state.
-                    # Search for all numbers in the line.
-                    numbers = self.NUMBER_SEARCH.findall(line)
-                    
-                    # Add to our list of excited states.
-                    self.triplet_states.append([int(numbers[0]), float(numbers[1])])
-                    
-                elif all(s in line for s in ['Excited State','Singlet']):
-                    # Triplet excited state.
-                    # Search for all numbers in the line.
-                    numbers = self.NUMBER_SEARCH.findall(line)
-                    
-                    # Add to our list of excited states.
-                    self.singlet_states.append([int(numbers[0]), float(numbers[1])])
-                    
                 elif 'AO basis set' in line:
                     # Start of basis set section.
                     self.basis_set_start_line = line_num +1
@@ -297,6 +276,38 @@ class Gaussian_parser(Molsoc):
                 elif 'primitive gaussians' in line:
                     # End of basis set section.
                     self.basis_set_end_line = line_num -1
+                    
+        # We open our .log file again to start reading from the top.
+        with open(self.log_file_name, 'r') as log_file:
+            # Parse with cclib.
+            ccdata = cclib.io.ccread(log_file)
+            
+            # Get our geometry.
+            try:
+                self.geometry = [[str(periodictable.elements[proton_num]), coord[0], coord[1], coord[2]] for proton_num, coord in zip(ccdata.atomnos, ccdata.atomcoords[-1])]
+            except Exception as e:
+                raise Exception("Failed to parse atom geometry") from e
+             
+            # Excited states.
+            try:
+                for es_index, es_symm in enumerate(ccdata.etsyms):
+                    # Decide if this is a singlet or triplet.
+                    if "Singlet" in es_symm:
+                        es_list = self.singlet_states
+                    elif "Triplet" in es_symm:
+                        es_list = self.triplet_states
+                    else:
+                        # Unrecognised state.
+                        continue
+                    
+                    # Add data to the identified list.
+                    # Each item of this list a two membered list of:
+                    # - The order/level of the excited state out of all excite states (not just theis mult).
+                    # - The energy of the excited state, remembering that etenergies is in wavenumbers.
+                    es_list.append([es_index+1, round(self.wavenumbers_to_energy(ccdata.etenergies[es_index]), 4)])
+                
+            except Exception as e:
+                raise Exception("Failed to parse excited states data") from e
 
         # Check we were able to parse as many excited states as were asked.
         if len(self.requested_singlets) > 0 and max(self.requested_singlets) > len(self.singlet_states):
@@ -304,23 +315,6 @@ class Gaussian_parser(Molsoc):
         
         if len(self.requested_triplets) > 0 and max(self.requested_triplets) > len(self.triplet_states):
             raise Exception("Unable to parse requested triplet excited state num {}; only found {} triplets".format(max(self.requested_triplets), len(self.triplet_states)))
-                    
-        # We open our .log file again to start reading from the top.
-        with open(self.log_file_name, 'r') as log_file:
-            ccdata = cclib.io.ccread(log_file)
-            self.geometry = [[str(periodictable.elements[proton_num]), coord[0], coord[1], coord[2]] for proton_num, coord in zip(ccdata.atomnos, ccdata.atomcoords[-1])]
-            
-            # The geometry we would read by this method is in a different orientation to MOs etc. Use cclib instead.
-#             # Cut out the geometry section.
-#             geometry_section = list(islice(log_file, self.geometry_start_line, self.geometry_start_line + self.num_atoms))
-#             
-#             # Split and convert to better types (don't think this is necessary either...)
-#             for geometry in geometry_section:
-#                 # Split on whitespace (into atom symbol and 3 coords)
-#                 parts = geometry.split()
-#                 
-#                 # Add to our geometry list.
-#                 self.geometry.append([parts[0], float(parts[1]), float(parts[2]), float(parts[3])])    
        
         # Read basis set information.
         with open(self.log_file_name, 'r') as log_file:

@@ -1,8 +1,10 @@
 import re
 from pathlib import Path
 import subprocess
-import pysoc
 from logging import getLogger
+import scipy.constants
+
+import pysoc
 
 class Molsoc(object):
     """
@@ -229,9 +231,22 @@ class Molsoc(object):
             # Error running molsoc.
             getLogger(pysoc.logger_name).error("An error occurred in the molsoc subprogram. Dumping output:\n".format(e.stdout))
             raise e
-            
-        
-        
+    
+    
+    @classmethod
+    def wavelength_to_energy(self, wavelength):
+        """
+        Convert a wavelength (in nm) to energy (in eV).
+        """
+        # e = (c * h) / λ
+        return ((scipy.constants.speed_of_light * scipy.constants.Planck) / (wavelength / 1000000000)) / scipy.constants.eV
+    
+    @classmethod
+    def wavenumbers_to_energy(self, wavenumbers):
+        """
+        Convert wavenumbers (in cm-1) to energy (in eV).
+        """
+        return self.wavelength_to_energy((1 / wavenumbers) * 10000000)
         
         
         
