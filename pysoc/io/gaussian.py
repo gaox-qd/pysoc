@@ -65,7 +65,8 @@ class RWF_parser():
                 stdout = subprocess.PIPE,
                 stderr = subprocess.STDOUT,
                 universal_newlines = True,
-                cwd = str(self.rwf_file_name.parent)
+                cwd = str(self.rwf_file_name.parent),
+                check = True
                 )
             
             dumped_data = rwfdump_proc.stdout.split("\n")
