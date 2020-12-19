@@ -65,7 +65,8 @@ class RWF_parser():
                 stdout = subprocess.PIPE,
                 stderr = subprocess.STDOUT,
                 universal_newlines = True,
-                cwd = str(self.rwf_file_name.parent)
+                cwd = str(self.rwf_file_name.parent),
+                check = True
                 )
             
             dumped_data = rwfdump_proc.stdout.split("\n")
@@ -272,8 +273,10 @@ class Gaussian_parser(Molsoc):
                 elif 'AO basis set' in line:
                     # Start of basis set section.
                     self.basis_set_start_line = line_num +1
-                    
-                elif 'primitive gaussians' in line:
+                
+                elif self.basis_set_start_line is not None and self.basis_set_end_line is None and line == "\n":
+                
+                #elif 'primitive gaussians' in line:
                     # End of basis set section.
                     self.basis_set_end_line = line_num -1
                     
@@ -302,7 +305,7 @@ class Gaussian_parser(Molsoc):
                     
                     # Add data to the identified list.
                     # Each item of this list a two membered list of:
-                    # - The order/level of the excited state out of all excite states (not just theis mult).
+                    # - The order/level of the excited state out of all excite states (not just this mult).
                     # - The energy of the excited state, remembering that etenergies is in wavenumbers.
                     es_list.append([es_index+1, round(self.wavenumbers_to_energy(ccdata.etenergies[es_index]), 4)])
                 
@@ -341,7 +344,10 @@ class Gaussian_parser(Molsoc):
                     
                 if len(parts) == 2 and re.search(r'\d \d', basis_set_line):
                     #line = '{}  {}\n'.format(element[i], line.split()[1])
-                    basis_set_line = '{}  {}\n'.format(self.geometry[atom_index][0], parts[1])
+                    try:
+                        basis_set_line = '{}  {}\n'.format(self.geometry[atom_index][0], parts[1])
+                    except  Exception:
+                        pass
                     atom_index += 1
                     
                 # Save the line in our attribute.
