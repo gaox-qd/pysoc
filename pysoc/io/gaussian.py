@@ -325,7 +325,7 @@ class Gaussian_parser(Molsoc):
             atom_index = 0
             
             # Cut out the basis set section (this can be quite large?).
-            for basis_set_line in list(islice(log_file, self.basis_set_start_line, self.basis_set_end_line)):
+            for basis_set_line in list(islice(log_file, self.basis_set_start_line, self.basis_set_end_line +1)):
                 
                 # Split up the line.
                 parts = basis_set_line.split()
