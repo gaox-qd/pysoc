@@ -17,6 +17,8 @@ class Molsoc(object):
     NUMBER_SEARCH = re.compile(r'[-+]?\d*\.\d+|\d+')
     
     #MOLSOC_PATH = 'molsoc'
+    # The list of atoms for which Zeff is supported.
+    ZEFF_ATOMS = ("H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Fe", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "In", "Sn", "Sb", "Te", "In", "Xe", "Ir")
     
     @property
     def MOLSOC_PATH(self):
@@ -61,6 +63,18 @@ class Molsoc(object):
         self.ao_basis = []
         
         self.output = None
+        
+    def check_zeff(self):
+        """
+        Check whether Zeff values are available for all atoms.
+        
+        :returns: True or False
+        """
+        for element, x, y, z in self.geometry:
+            if element not in self.ZEFF_ATOMS:
+                return False
+            
+        return True
     
     @property
     def ndim(self):
@@ -167,7 +181,7 @@ class Molsoc(object):
             # Finally write a last END.
             basis_file.write("END")
             
-    def write_molsoc_input(self, keywords,  soc_scale = None, file_name = "molsoc.inp",):
+    def write_molsoc_input(self, keywords, soc_scale = None, file_name = "molsoc.inp",):
         """
         Write the molsoc input file.
         
@@ -187,6 +201,8 @@ class Molsoc(object):
             # Might need a final double whitespace after last keyword, not sure...
             inp_file.write("  ".join(keywords))
             inp_file.write("\n")
+            
+            #TODO: charg and mult
             
             # Write empty comment (?)
             inp_file.write("#\n")

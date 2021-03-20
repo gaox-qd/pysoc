@@ -4,6 +4,7 @@ from pathlib import Path
 from pysoc.io.dftb_plus import DFTB_plus_parser
 from pysoc.io.gaussian import Gaussian_parser
 from pysoc.io.soc_td import Soc_td
+import warnings
 
 class Calculator():
     """
@@ -12,6 +13,7 @@ class Calculator():
     
     def __init__(self,
         calc_file,
+        calculation = None,
         num_singlets = None,
         num_triplets = None,
         QM_program = None,
@@ -20,6 +22,7 @@ class Calculator():
         Main program function for PySOC controller program.
         
         :param calc_file: The main QM output file (.log for Gaussian, .xyz for DFTB+). Other required QM output files will be found automatically based on the location of this file.
+        :param calculation: The type of SOC calculation to perform.
         :param num_singlets: The number of singlet excited states to calculate SOC for. This should not exceed the number of singlets calculated by the QM program.
         :param num_triplets: The number of triplet excited states to calculate SOC for. This should not exceed the number of triplets calculated by the QM program.
         :param QM_program: A string identifying the QM program to interface with (currently, one of either 'Gaussian' or 'DFTB+'.
@@ -50,18 +53,36 @@ class Calculator():
             self.molsoc = Gaussian_parser.from_output_files(calc_file, requested_singlets = requested_singlets, requested_triplets = requested_triplets, **aux_files)
             
             # Keywords for molsoc
-            self.keywords = ('ANG', 'Zeff', 'DIP')
+            self.keywords = ['ANG', 'DIP']
         
         elif QM_program == 'DFTB+':
             # Get our calculation parser.
             self.molsoc = DFTB_plus_parser.from_output_files(calc_file, requested_singlets = requested_singlets, requested_triplets = requested_triplets, **aux_files)
             
             # Keywords for molsoc
-            self.keywords = ('ANG', 'Zeff', 'DIP', 'TDB')
+            self.keywords = ['ANG', 'DIP', 'TDB']
         
         else:
             # We were given something random.
             raise Exception("Unknown or unrecognised program name '{}'".format(QM_program))
+        
+        # Add our calculation type (one, two or zeff) to our keywords.
+        if calculation == "auto":
+            # Check to see if we can use zeff.
+            if not self.molsoc.check_zeff():
+                # Print a warning.
+                warnings.warn("Zeff is not available for one or more of the atoms in this system; using normal one-electron SOC calculation instead")
+                self.keywords.append("ONE")
+            else:
+                # Go for zeff
+                self.keywords.append("ZEFF")
+        elif calculation == "one":
+            self.keywords.append("ONE")
+        elif calculation == "two":
+            self.keywords.append("TWO")
+        else:
+            # Something random.
+            raise Exception("Unknown or unrecognised calculation type '{}'".format(calculation))
         
         # Get our soc_td object.
         self.soc_td = Soc_td(self.molsoc)
