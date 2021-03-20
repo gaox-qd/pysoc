@@ -30,7 +30,7 @@ class Calculator():
         # TODO: Because of issue #1, we don't allow selecting exact singlets/triplets, we just ask how many.
         requested_singlets = list(range(1, num_singlets +1)) if num_singlets is not None else None
         requested_triplets = list(range(1, num_triplets +1)) if num_triplets is not None else None
-                    
+        self.calculation = calculation
                 
         # If we weren't told what QM_program to use, guess from the calc_file.
         calc_file = Path(calc_file)
@@ -65,24 +65,6 @@ class Calculator():
         else:
             # We were given something random.
             raise Exception("Unknown or unrecognised program name '{}'".format(QM_program))
-        
-        # Add our calculation type (one, two or zeff) to our keywords.
-        if calculation == "auto":
-            # Check to see if we can use zeff.
-            if not self.molsoc.check_zeff():
-                # Print a warning.
-                warnings.warn("Zeff is not available for one or more of the atoms in this system; using normal one-electron SOC calculation instead")
-                self.keywords.append("ONE")
-            else:
-                # Go for zeff
-                self.keywords.append("ZEFF")
-        elif calculation == "one":
-            self.keywords.append("ONE")
-        elif calculation == "two":
-            self.keywords.append("TWO")
-        else:
-            # Something random.
-            raise Exception("Unknown or unrecognised calculation type '{}'".format(calculation))
         
         # Get our soc_td object.
         self.soc_td = Soc_td(self.molsoc)
@@ -124,13 +106,34 @@ class Calculator():
                 self.molsoc.parse()
             except Exception as e:
                 raise Exception("Failed to parse QM output file") from e
-            self.molsoc.prepare(self.keywords, SOC_scale, output)
+            
+            keywords = [keyword for keyword in self.keywords]
+            
+            # Add our calculation type (one, two or zeff) to our keywords.
+            if self.calculation == "auto":
+                # Check to see if we can use zeff.
+                if not self.molsoc.check_zeff():
+                    # Print a warning.
+                    warnings.warn("Zeff is not available for one or more of the atoms in this system; using normal one-electron SOC calculation instead")
+                    keywords.append("ONE")
+                else:
+                    # Go for zeff
+                    keywords.append("ZEFF")
+            elif self.calculation == "one":
+                keywords.append("ONE")
+            elif self.calculation == "two":
+                keywords.append("TWO")
+            else:
+                # Something random.
+                raise Exception("Unknown or unrecognised calculation type '{}'".format(self.calculation))
+            
+            self.molsoc.prepare(keywords, SOC_scale, output)
             
             # Run molsoc.
             self.molsoc.run()
             
             # Prepare input for soc_td.
-            self.soc_td.prepare(self.keywords, include_ground, CI_coefficient_threshold)
+            self.soc_td.prepare(keywords, include_ground, CI_coefficient_threshold)
             
             # Now call soc_td.
             self.soc_td.run()
