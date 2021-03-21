@@ -16,11 +16,11 @@
 #
 # *** Intel Compiler;  efc ***
 #
-#F90 = ifort
-#FLAG = -r8 
-#LINK = -L../lib -ldmy
+F90 = ifort
+FLAG = -r8 
+LINK = -L../lib -ldmy
 #LINK = -lmkl -lpthread -lguide
-#INCLUDE = ../include
+INCLUDE = ../include
 #
 # *** PGI Fortran Compiler; pgf90 ***
 #
@@ -29,10 +29,10 @@
 #LINK = -L../lib -ldmy
 #INCLUDE = ../include
 #
-F90 = gfortran
-FLAG = -fdefault-real-8 
-LINK = -L../lib -ldmy 
-INCLUDE = ../include
+#F90 = gfortran
+#FLAG = -fdefault-real-8 
+#LINK = -L../lib -ldmy 
+#INCLUDE = ../include
 #
 PROGNAME = molsoc0.1.exe
 #
