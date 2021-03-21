@@ -18,7 +18,7 @@ class Molsoc(object):
     
     #MOLSOC_PATH = 'molsoc'
     # The list of atoms for which Zeff is supported.
-    ZEFF_ATOMS = ("H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Fe", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "In", "Sn", "Sb", "Te", "In", "Xe", "Ir")
+    ZEFF_ATOMS = ("H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Xe", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg")
     
     @property
     def MOLSOC_PATH(self):
@@ -44,7 +44,7 @@ class Molsoc(object):
         # Lists of triplet and singlet energies. Each item is an iterable where the first item is the level (1, 2, 3 etc), and the second the energy (in eV).
         self.singlet_states = []
         self.triplet_states = []
-        
+
         # This is a list of iterables of the form [element, x_coord, y_coord, z_coord]
         self.geometry = []
         
@@ -201,8 +201,6 @@ class Molsoc(object):
             # Might need a final double whitespace after last keyword, not sure...
             inp_file.write("  ".join(keywords))
             inp_file.write("\n")
-            
-            #TODO: charg and mult
             
             # Write empty comment (?)
             inp_file.write("#\n")
