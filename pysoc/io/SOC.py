@@ -13,7 +13,7 @@ class Calculator():
     
     def __init__(self,
         calc_file,
-        calculation = None,
+        calculation = "auto",
         num_singlets = None,
         num_triplets = None,
         QM_program = None,
