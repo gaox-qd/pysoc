@@ -6,7 +6,7 @@ name = "PySOC"
 # Brief description.
 description = "PySOC spin-orbit coupling calculations"
 # Whether this is a development version.
-development = True
+development = False
 # Version information.
 major_version = 2
 minor_version = 2
