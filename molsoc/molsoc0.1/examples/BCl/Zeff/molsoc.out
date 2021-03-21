@@ -1,0 +1,162 @@
+    ----------------------------------------------
+    -                                            -
+    -               PROGRAM MolSOC               -
+    -                Version 0.1                 -
+    -          AUTHOR: Sandro G. Chiodo          -
+    -                                            -
+    ----------------------------------------------
+
+
+ *** 16 Sep 2013 - 16:15:06 ***
+
+ *** SPIN-ORBIT CALCULATIONS ***
+
+ GEOMETRY IN BOHR
+ RESTRICTED MOs
+ COEFFICIENTS OF SPHERICAL MOs
+ ONE-ELECTRON SOC CALCULATIONS WITH Z_eff
+
+ MOLECULAR CHARGE                 =     0
+ MULTIPLICITY OF THE FIRST STATE  =     3
+ MULTIPLICITY OF THE SECOND STATE =     3
+ NUMBER OF ELECTRONS              =    22
+
+
+ GEOMETRY IN ANGSTROM
+
+ ATOM          X           Y           Z      Z_A   Z_eff
+
+  B        0.000000    0.000000   -1.312091   5.0   2.197
+  CL       0.000000    0.000000    0.385909  17.0  13.976
+
+ GEOMETRY IN BOHR
+
+ ATOM          X           Y           Z      Z_A   Z_eff
+
+  B        0.000000    0.000000   -2.479492   5.0   2.197
+  CL       0.000000    0.000000    0.729262  17.0  13.976
+
+
+ NUMBER OF ATOMS                  =      2
+ NUMBER OF SHELLS                 =     14
+ NUMBER OF GTFs                   =     36
+ NUMBER OF STOs                   =     34
+
+
+ BASIS SET
+
+ B 
+     1    0    6    1
+          1915.166600000        -0.002039500
+           287.183110000        -0.015596600
+            65.157176000        -0.076244200
+            18.195827000        -0.247924400
+             5.701537900        -0.479082300
+             1.843837500        -0.335295300
+     1    0    2    1
+             3.491430400         0.077422400
+             0.305056000        -0.574123900
+     1    0    1    1
+             0.096486500         1.000000000
+     1    1    4    3
+            11.687417000         0.015086100
+             2.630775500         0.088815700
+             0.744226900         0.290368200
+             0.230476100         0.499443300
+     1    1    1    3
+             0.069938000         1.000000000
+     1    2    1    6
+             0.400000000         1.000000000
+ CL
+     2    0    6    1
+         26351.458000000         0.001732400
+          3945.056700000         0.013310900
+           892.438350000         0.066674800
+           249.417430000         0.230050600
+            79.721572000         0.474230700
+            26.831145000         0.359524000
+     2    0    3    1
+            52.785301000        -0.095629600
+             5.615642900         0.588084000
+             2.105907600         0.486698200
+     2    0    2    1
+             3.558614900         0.180689100
+             0.484798100        -0.688482900
+     2    0    1    1
+             0.173331000         1.000000000
+     2    1    5    3
+           271.078210000        -0.010925700
+            63.547208000        -0.077590900
+            19.737109000        -0.277515900
+             6.788993700        -0.503193300
+             2.348030300        -0.334842600
+     2    1    2    3
+             1.106686400        -0.276538100
+             0.382968000        -0.546676800
+     2    1    1    3
+             0.125113300         1.000000000
+     2    2    1    6
+             0.750000000         1.000000000
+
+
+ ONE-ELECTRON SOC INTEGRALS CALCULATED IN    0.004000 SEC.
+
+
+ *** BEFORE SVD (BIORTHOGONALIZATION) ***
+
+ NUMBER OF ELECTRONS =        11.999999991
+ NUMBER OF ELECTRONS =         9.999999992
+ NUMBER OF ELECTRONS =        11.999999990
+ NUMBER OF ELECTRONS =         9.999999992
+
+ ORTSVDLAP: DGESVD SUCCESSFULL EXIT:    0
+
+ BIORTHOGONALIZATION PERFORMED IN    0.000000 SEC.
+
+ ORTSVDLAP: DGESVD SUCCESSFULL EXIT:    0
+
+ BIORTHOGONALIZATION PERFORMED IN    0.000000 SEC.
+
+
+ *** AFTER SVD (BIORTHOGONALIZATION)  ***
+
+ NUMBER OF ELECTRONS =        11.999999991
+ NUMBER OF ELECTRONS =         9.999999992
+ NUMBER OF ELECTRONS =        11.999999990
+ NUMBER OF ELECTRONS =         9.999999992
+
+ SPIN DISCOINCIDENCE    =  0
+ ORBITAL DISCOINCIDENCE =  1
+ COUPLING DETERMINANTS  =  ALPHA ALPHA
+
+ FIRST STATE:
+
+  ALPHA HOMO NO. =   12
+  BETA HOMO NO.  =   10
+
+ SECOND STATE:
+
+  ALPHA HOMO NO. =   12
+  BETA HOMO NO.  =   10
+
+
+ ******************************
+ *** MATRIX ELEMENTS (CM-1) ***
+ ******************************
+
+  (I-STATE) (II-STATE)            1-el                    2-el                   TOTAL
+      MS        MS            R           I           R           I           R           I
+ ----------------------------------------------------------------------------------------------
+ 
+     1.00      1.00       -48.1644      0.0000      0.0000      0.0000    -48.1644      0.0000
+     0.00      0.00         0.0000      0.0000      0.0000      0.0000      0.0000      0.0000
+    -1.00     -1.00        48.1644      0.0000      0.0000      0.0000     48.1644      0.0000
+ 
+     1.00      0.00         0.0000      0.0000      0.0000      0.0000      0.0000      0.0000
+     0.00      1.00         0.0000     -0.0000      0.0000      0.0000      0.0000     -0.0000
+     0.00     -1.00         0.0000      0.0000      0.0000      0.0000      0.0000      0.0000
+    -1.00      0.00         0.0000     -0.0000      0.0000      0.0000      0.0000     -0.0000
+
+ THE TOTAL CPU TIME IS:    0.020001 SEC.
+
+ *** 16 Sep 2013 - 16:15:06 ***
