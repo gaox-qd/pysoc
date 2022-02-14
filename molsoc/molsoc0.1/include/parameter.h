@@ -4,10 +4,10 @@ C     *** MolSOC parameters ***
 C
       INTEGER MXATM,MXSH,MXGTF,MXSTO
 C
-      PARAMETER (MXATM = 500,
-     $           MXSH  = 1000,
-     $           MXGTF = 5000,
-     $           MXSTO = 5000)
+      PARAMETER (MXATM = 5000,
+     $           MXSH  = 10000,
+     $           MXGTF = 50000,
+     $           MXSTO = 50000)
 C
       INTEGER MXL,MXLT,MXSO,MXCO
 C
