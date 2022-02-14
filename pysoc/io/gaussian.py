@@ -318,6 +318,9 @@ class Gaussian_parser(Molsoc):
         
         if len(self.requested_triplets) > 0 and max(self.requested_triplets) > len(self.triplet_states):
             raise Exception("Unable to parse requested triplet excited state num {}; only found {} triplets".format(max(self.requested_triplets), len(self.triplet_states)))
+        
+        if self.basis_set_start_line is None or self.basis_set_end_line is None:
+            raise Exception("Missing basis set section from calculation log file, was the calculation run with the GFInput option?")
        
         # Read basis set information.
         with open(self.log_file_name, 'r') as log_file:
