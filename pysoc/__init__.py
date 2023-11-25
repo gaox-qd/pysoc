@@ -1,4 +1,7 @@
 from datetime import datetime
+from contextlib import ExitStack
+import atexit
+import importlib_resources
 
 
 # The name of this package.
@@ -23,3 +26,13 @@ last_updated = datetime.strptime(_last_updated_string, "%d/%m/%Y")
 
 # The name of the logger that will be used by pysoc.
 logger_name = "PySOC"
+
+
+def get_resource(name):
+    """
+    Get a pathlib path object to a package resource.
+    """
+    file_manager = ExitStack()
+    atexit.register(file_manager.close)
+    ref = importlib_resources.files('pysoc') / name
+    return file_manager.enter_context(importlib_resources.as_file(ref))

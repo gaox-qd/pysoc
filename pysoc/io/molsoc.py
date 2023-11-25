@@ -5,7 +5,7 @@ from logging import getLogger
 import scipy.constants
 
 import pysoc
-import pkg_resources
+from pysoc import get_resource
 
 class Molsoc(object):
     """
@@ -25,7 +25,7 @@ class Molsoc(object):
         """
         Path to the molsoc executable.
         """
-        return Path(pkg_resources.resource_filename('pysoc', 'data/bin/molsoc'))
+        return get_resource('data/bin/molsoc')
     
     def __init__(self,requested_singlets, requested_triplets):
         """

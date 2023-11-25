@@ -1,7 +1,7 @@
-import pkg_resources
 from pathlib import Path
 
 from pysoc.io import Molsoc
+from pysoc import get_resource
 
 class DFTB_plus_parser(Molsoc):
     """
@@ -16,7 +16,7 @@ class DFTB_plus_parser(Molsoc):
         """
         Default path to our fitted basis set dir.
         """
-        return Path(pkg_resources.resource_filename('pysoc', 'data/parameters/mio-1-1-fit'))
+        return get_resource('data/parameters/mio-1-1-fit')
     
     def __init__(self,
                  xyz_file_name,

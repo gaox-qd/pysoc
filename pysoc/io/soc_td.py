@@ -1,12 +1,13 @@
-from pysoc.io.file import write_file, read_file
 from pathlib import Path
-from pysoc.io.gaussian import Gaussian_parser
-from pysoc.io.dftb_plus import DFTB_plus_parser
 import subprocess
 from logging import getLogger
-import pysoc
 import math
-import pkg_resources
+
+from pysoc import get_resource
+import pysoc
+from pysoc.io.gaussian import Gaussian_parser
+from pysoc.io.dftb_plus import DFTB_plus_parser
+from pysoc.io.file import write_file, read_file
 
 class SOC():
     """
@@ -92,7 +93,7 @@ class Soc_td():
         """
         Path to the molsoc executable.
         """
-        return Path(pkg_resources.resource_filename('pysoc', 'data/bin/soc_td'))
+        return get_resource('data/bin/soc_td')
     
     def __init__(self, molsoc):
         """
