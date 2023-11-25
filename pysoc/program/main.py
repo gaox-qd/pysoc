@@ -3,7 +3,7 @@
    td-dft(Gaussian)/td-dftb(DFTB+, Thomas Niehaus)
    by Xing Gao, MPI@Muelheim, 2015
    
-   Rewritten for python3 by Oliver Lee
+   Rewritten for python3 by Oliver S. Lee
 '''
 
 # General imports.

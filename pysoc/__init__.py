@@ -12,15 +12,15 @@ description = "PySOC spin-orbit coupling calculations"
 development = False
 # Version information.
 major_version = 2
-minor_version = 2
-revision = 3
+minor_version = 3
+revision = 0
 version_number = "{}.{}.{}".format(major_version, minor_version, revision)
 # The full version number of this package.
 version = "{}{}".format(version_number, "-dev" if development else "")
 
 
 # Program date (when we were last updated).
-_last_updated_string = "26/11/2020"
+_last_updated_string = "25/11/2023"
 last_updated = datetime.strptime(_last_updated_string, "%d/%m/%Y")
 
 
