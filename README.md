@@ -65,6 +65,7 @@ O          1.065288       0.000001       0.000090
 H         -0.718439       0.939705       0.000097
 H         -0.718441      -0.939705       0.000136
 
+
 ```
 
 ### DFTB+
@@ -150,7 +151,6 @@ To calculate SOC from a completed DFTB+ calculation:
 ```console
 $ pysoc formaldehyde.xyz
 ```
-```
 
 Once the calculation is complete, the SOC table will be printed:
 
@@ -197,6 +197,7 @@ To write to a file instead of to the screen, use standard Linux file redirection
 ```console
 $ pysoc ch2o.log -c > SOC.csv
 ```
+
 ### Intermediate Files
 PySOC generates a number of intermediate files during operation. By default, these are deleted at the end of the calculation and only the final SOC values are displayed.
 To override this behaviour and keep these intermediate files, use the `-o` (output) option with a path to a directory where the intermediate files should be stored.
