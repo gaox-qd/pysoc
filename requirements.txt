@@ -1,4 +1,4 @@
-scipy==1.5.1
-periodictable==1.5.2
-tabulate==0.8.7
-cclib==1.6.4
+scipy
+periodictable
+tabulate
+cclib
