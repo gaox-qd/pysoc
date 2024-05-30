@@ -20,7 +20,7 @@ version = "{}{}".format(version_number, "-dev" if development else "")
 
 
 # Program date (when we were last updated).
-_last_updated_string = "25/11/2023"
+_last_updated_string = "30/05/2024"
 last_updated = datetime.strptime(_last_updated_string, "%d/%m/%Y")
 
 
