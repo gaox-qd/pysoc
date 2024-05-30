@@ -232,5 +232,7 @@ DOI: 10.1021/acs.jctc.6b00915
 ## Authorship
 
 PySOC was originally written by Xing Gao et al. for python 2.x (J. Chem. Theory Comput. 13 (2017) 515–524).
-[MolSOC](molsoc/), which is used for the calculation of atomic integrals, was originally written by Sandro Giuseppe Chiodo et al. (Computer Physics Communications 185 (2014) 676–683)
+
+[MolSOC](molsoc/), which is used for the calculation of atomic integrals, was originally written by Sandro Giuseppe Chiodo et al. (Computer Physics Communications 185 (2014) 676–683).
+
 PySOC was re-written for Python 3.x by Oliver S. Lee.
