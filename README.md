@@ -217,9 +217,9 @@ $ pysoc ch2o.log -o ./
 
 ## Additional documentation
 
- # code: pysoc.tar.gz; short tutorial: [doc/pysoc.pdf](doc/pysoc.pdf)  
- # Even more better tutorial written in Chinese by sobereva Lu Tian:http://bbs.keinsci.com/thread-9442-1-1.html  
- # For Gaussian 16 by ggdh:http://bbs.keinsci.com/thread-19813-1-1.html  
+ #. code: pysoc.tar.gz; short tutorial: [doc/pysoc.pdf](doc/pysoc.pdf)  
+ #. Even more better tutorial written in Chinese by sobereva Lu Tian:http://bbs.keinsci.com/thread-9442-1-1.html  
+ #. For Gaussian 16 by ggdh:http://bbs.keinsci.com/thread-19813-1-1.html  
 
 ## Reference and Citation
 
