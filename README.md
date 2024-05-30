@@ -136,6 +136,7 @@ For example, to calculate SOC for a file in the current directory with the name 
 
 ```console
 $ pysoc formaldehyde.log
+```
 
 The rwf file, which is also required, will be guessed based on the name of the given log file. The rwf file can also be specified
 explicitly:
