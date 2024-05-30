@@ -20,6 +20,20 @@ PySOC currently supports excited state calculations with Gaussian and DFTB+.
 $ pip install cclib tabulate periodictable scipy
 ```
 
+## Installation
+
+The main pysoc directory should be added to the PYTHONPATH:
+
+```console
+export PYTHONPATH="$PYTHONPATH:/path/to/pysoc"
+```
+
+The `bin` folder should be added to the PATH:
+
+```console
+export PATH="$PATH:/path/to/pysoc/bin"
+```
+
 ## Pre-calculation
 
 Before spin-orbit coupling can be calculated, it is first necessary to perform an excited states calculation with either the Gaussian or DFTB+ calculation programs.
