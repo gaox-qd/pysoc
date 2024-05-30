@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 '''Spin-Orbit Coupling(SOC) with interface to
    td-dft(Gaussian)/td-dftb(DFTB+, Thomas Niehaus)
    by Xing Gao, MPI@Muelheim, 2015
