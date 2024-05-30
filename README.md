@@ -16,7 +16,7 @@ PySOC currently supports excited state calculations with Gaussian and DFTB+.
 
 ## Dependencies
 
-```Shell
+```console
 $ pip install cclib tabulate periodictable scipy
 ```
 
@@ -134,26 +134,26 @@ Once the QC/TB calculation has completed, SOC can be calculated using the `pysoc
 
 For example, to calculate SOC for a file in the current directory with the name ch2o.log:
 
-```shell
+```console
 $ pysoc formaldehyde.log
 
 The rwf file, which is also required, will be guessed based on the name of the given log file. The rwf file can also be specified
 explicitly:
 
-```shell
+```console
 $ pysoc formaldehyde.log --rwf-file gaussian.rwf
 ```
 
 To calculate SOC from a completed DFTB+ calculation:
 
-```shell
+```console
 $ pysoc formaldehyde.xyz
 ```
 ```
 
 Once the calculation is complete, the SOC table will be printed:
 
-```shell
+```console
 $ pysoc ch2o.log
  Singlet    Triplet     RSS (cm-1)    +1 (cm-1)    0 (cm-1)    -1 (cm-1)
 ---------  ---------  ------------  -----------  ----------  -----------
@@ -180,7 +180,7 @@ The root-sum-square for the three triplet sub-states is presented in the RSS col
 
 Alternatively, a comma-separated values (CSV) format can be requested with the ‘-c’ option, which can be more easily imported into a spreadsheet for analysis:
 
-```shell
+```console
 $ pysoc ch2o.log -c
 Singlet,Triplet,RSS (cm-1),+1 (cm-1),0 (cm-1),-1 (cm-1)
 S0,T1,60.7419154885397,42.95102,0.00769,42.95102
@@ -193,7 +193,7 @@ S0,T5,11.733160146260683,0.00131,11.73316,0.00131
 
 To write to a file instead of to the screen, use standard Linux file redirection with the ‘>’ or ‘>>’ characters (to overwrite or append to an existing file respectively):
 
-```shell
+```console
 $ pysoc ch2o.log -c > SOC.csv
 ```
 ### Intermediate Files
@@ -201,7 +201,7 @@ PySOC generates a number of intermediate files during operation. By default, the
 To override this behaviour and keep these intermediate files, use the `-o` (output) option with a path to a directory where the intermediate files should be stored.
 One may use `-o ./` to write the intermediate files to the current directory. The `-o` option has no effect on the final SOC values:
 
-```shell
+```console
 $ pysoc ch2o.log -o ./
  Singlet    Triplet     RSS (cm-1)    +1 (cm-1)    0 (cm-1)    -1 (cm-1)
 ---------  ---------  ------------  -----------  ----------  -----------
