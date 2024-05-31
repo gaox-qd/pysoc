@@ -1,0 +1,11 @@
+#
+#  Coupling between alpha-alpha doublet determinants
+#  Pi-Pi states
+#  One-electron operator with Zeff
+#
+Zeff OcT
+#
+0 2 D 2 D
+Sn  0.00000000E+00  0.00000000E+00  1.13205877E+00  1.0 
+Cl  0.00000000E+00  0.00000000E+00 -3.32958463E+00  1.0
+End

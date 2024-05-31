@@ -1,0 +1,10 @@
+#
+# Coupling between beta-beta quartet determinants
+# Pi-Pi states
+# Full Breit-Pauli operator
+#
+Quadrupole
++1 4 R 4 R
+O   0.00000000E+00  0.00000000E+00  1.30485590E+00  1.0 
+O   1.59798760E-16  0.00000000E+00 -1.30485590E+00  1.0
+end

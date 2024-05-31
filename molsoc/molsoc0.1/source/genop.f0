@@ -1,0 +1,161 @@
+      SUBROUTINE GENOP
+C
+C     *******************************************************************
+C
+      IMPLICIT NONE
+C
+      INCLUDE 'parameter.h'
+C
+      INCLUDE 'fileio.h'
+      INCLUDE 'molecule.h'
+      INCLUDE 'moleculeD.h'
+C
+      INTEGER :: AX,AY,AZ,IATOM,IS,ISLAT,LSTO,MXLB
+      INTEGER, DIMENSION(3) :: NUM
+      INTEGER, DIMENSION(3) :: ICOU
+C
+C     O~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~O
+C
+C     ___ Initialize pointers ___
+C
+      GLL = 0
+      GUL = 0
+      LLS = 0
+      ULS = 0
+      LLSTO = 0
+      ULSTO = 0
+C
+C     ___ Initialize counters ___
+C
+      ISLAT = 0
+      IATOM = 1
+      NUM = 0
+      ICOU(1) = 0
+      ICOU(2:3) = 1
+      MXLB = 0
+C
+C     ___ Build pointers ___
+C
+C      print *, "NSHL", NSHL
+      DO IS=1,NSHL
+C        print *, "IS", IS
+C        print *, "element  ", ELEMENT(PSHELL(IS,1))
+        IF (IS == 1) THEN 
+          GLL(1) = 1
+        ELSE
+          GLL(IS) = GUL(IS-1) + 1
+        END IF
+        GUL(IS) = GLL(IS) + PSHELL(IS,3) - 1
+        LSTO = PSHELL(IS,2)
+C        print *, "GUL, GLL", GUL(IS), GLL(IS)
+C        print *, "genop,shell", PSHELL(IS,1), IATOM, IS
+C        print *, "MXLB", MXLB, LSTO
+        MXLB = MAX(MXLB,LSTO)
+        DO AX=LSTO,0,-1
+          DO AY=LSTO-AX,0,-1
+C            print *, "hello"
+            AZ = LSTO - AX - AY
+            ISLAT = ISLAT + 1
+C            print *, "AX,AY,AZ", AX,AY,AZ
+            IF (ISLAT > NSTO) GOTO 10000
+            IF (TDTB) THEN
+              IF (IATOM == PSHELL(IS,1) .and. ELEMENT(PSHELL(IS,1))
+     $           /= 'H') THEN
+C                print *, "ELEMENT1  ", ELEMENT(IATOM)
+C               print *, "IATOM,PSHELL1", IATOM, PSHELL(IS,1)
+                NUM(1) = NUM(1) + 1
+                IF (IATOM == 1) THEN 
+                  LLS(IATOM) = 1
+                ELSE
+                  LLS(IATOM) = ULS(IATOM-1) + 1
+                END IF
+C                print *, "genop,LLS", LLS(IATOM),IATOM
+                IF (ICOU(1) /= IS) THEN
+                  NUM(2) = NUM(2) + 1
+                  ICOU(1) = IS
+                END IF
+                ULS(IATOM) = LLS(IATOM) + NUM(2) - 1
+C               print *, "genop,ULS", ULS(IATOM)
+              ELSE IF (ELEMENT(PSHELL(IS,1)) /= 'H') THEN
+C                print *, "ELEMENT2  ", ELEMENT(IATOM)
+C               print *, "IATOM,PSHELL2", IATOM, PSHELL(IS,1)
+                IATOM = PSHELL(IS,1)
+C               print *, "IATOM,PSHELL3", IATOM, PSHELL(IS,1)
+                NUM(1:2) = 1
+                ICOU(1) = 0
+              ELSE
+C                print *, "ELEMENT3  ", ELEMENT(PSHELL(IS,1))
+                IATOM = PSHELL(IS,1)
+                ICOU(1) = IS
+                NUM(1:2) = 1
+
+                IF (IATOM == 1) THEN 
+                  LLS(IATOM) = 1
+                ELSE
+                  LLS(IATOM) = ULS(IATOM-1) + 1
+                END IF
+
+                ULS(IATOM) = LLS(IATOM) + NUM(2) - 1
+
+              END IF
+            ELSE 
+              IF (IATOM == PSHELL(IS,1)) THEN
+C                print *, "ELEMENT1  ", ELEMENT(IATOM)
+C               print *, "IATOM,PSHELL1", IATOM, PSHELL(IS,1)
+                NUM(1) = NUM(1) + 1
+                IF (IATOM == 1) THEN 
+                  LLS(IATOM) = 1
+                ELSE
+                  LLS(IATOM) = ULS(IATOM-1) + 1
+                END IF
+C                print *, "genop,LLS", LLS(IATOM),IATOM
+                IF (ICOU(1) /= IS) THEN
+                  NUM(2) = NUM(2) + 1
+                  ICOU(1) = IS
+                END IF
+                ULS(IATOM) = LLS(IATOM) + NUM(2) - 1
+C               print *, "genop,ULS", ULS(IATOM)
+              ELSE 
+C                print *, "ELEMENT2  ", ELEMENT(IATOM)
+C               print *, "IATOM,PSHELL2", IATOM, PSHELL(IS,1)
+                IATOM = PSHELL(IS,1)
+C               print *, "IATOM,PSHELL3", IATOM, PSHELL(IS,1)
+                NUM(1:2) = 1
+                ICOU(1) = 0
+              END IF
+C             print *, "NUM(1:2)", NUM(1:2)
+C             print *, "ICOU", ICOU(1:3)
+            END IF
+            IF (ICOU(3) == IS) THEN
+              NUM(3) = NUM(3) + 1
+C             print *, "hello1", NUM(3)
+            ELSE
+              ICOU(3) = IS
+              NUM(3) = 1
+C             print *, "hello2", NUM(3)
+            END IF
+          END DO
+        END DO
+        IF (IS == 1) THEN
+          LLSTO(1) = 1
+        ELSE
+          LLSTO(IS) = ULSTO(IS-1) + 1
+        END IF
+        ULSTO(IS) = LLSTO(IS) + NUM(3) - 1
+      END DO
+C
+      DSHL = ((MXLB + 1)*(MXLB + 2))/2
+C
+      RETURN
+C
+C     O~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~O
+C
+C     ___ Error handling ___
+C
+10000 CONTINUE
+      WRITE(OUT,"(/,T2,'ERROR FOR ORBITAL POINTER')")
+      STOP
+C
+C     O________________________________________________________________O
+C
+      END SUBROUTINE GENOP

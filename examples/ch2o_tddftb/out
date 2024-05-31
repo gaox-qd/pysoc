@@ -1,0 +1,64 @@
+================================================================================
+==
+==   Density Functional based Tight Binding with a lot of extensions (DFTB+)    
+==
+==                          Unofficial release (r4514)
+==
+==                            (ParserVersion = 4)
+==
+================================================================================
+
+
+********************************************************************************
+** Parsing and initializing
+********************************************************************************
+
+Interpreting input file 'dftb_in.hsd'
+--------------------------------------------------------------------------------
+Reading SK-files:
+  /fsnfs/users/xinggao/work/gsh/thiothymine/gtsh/test_python/tddftb/sk/mio-1-1/C-C.skf
+  /fsnfs/users/xinggao/work/gsh/thiothymine/gtsh/test_python/tddftb/sk/mio-1-1/C-O.skf
+  /fsnfs/users/xinggao/work/gsh/thiothymine/gtsh/test_python/tddftb/sk/mio-1-1/C-H.skf
+  /fsnfs/users/xinggao/work/gsh/thiothymine/gtsh/test_python/tddftb/sk/mio-1-1/O-C.skf
+  /fsnfs/users/xinggao/work/gsh/thiothymine/gtsh/test_python/tddftb/sk/mio-1-1/O-O.skf
+  /fsnfs/users/xinggao/work/gsh/thiothymine/gtsh/test_python/tddftb/sk/mio-1-1/O-H.skf
+  /fsnfs/users/xinggao/work/gsh/thiothymine/gtsh/test_python/tddftb/sk/mio-1-1/H-C.skf
+  /fsnfs/users/xinggao/work/gsh/thiothymine/gtsh/test_python/tddftb/sk/mio-1-1/H-O.skf
+  /fsnfs/users/xinggao/work/gsh/thiothymine/gtsh/test_python/tddftb/sk/mio-1-1/H-H.skf
+Done.
+
+
+Processed input in HSD format written to 'dftb_pin.hsd'
+
+Starting initialization...
+--------------------------------------------------------------------------------
+Mode:                        Static calculation
+Self consistent charges:     Yes
+SCC-tolerance:                 0.100000E-09
+Max. scc iterations:                    100
+Ewald alpha parameter:         0.000000E+00
+Spin polarisation:           No
+Nr. of up electrons:             6.000000
+Nr. of down electrons:           6.000000
+Periodic boundaries:         No
+Diagonalizer:                Divide and Conquer
+Mixer:                       Broyden mixer
+Mixing parameter:                  0.200000
+Maximal SCC-cycles:                     100
+Nr. of chrg. vec. in memory:            100
+Electronic temperature:        0.100000E-07
+Initial charges:             Set automatically (system chrg:   0.000E+00)
+Included shells:              C:  s, p
+                              O:  s, p
+                              H:  s
+Extra options:
+                             Eigenvector printing
+--------------------------------------------------------------------------------
+ 
+
+********************************************************************************
+** Geometry step: 0
+********************************************************************************
+
+  iSCC Total electronic   Diff electronic      SCC error    
+Hamilton/Overlap written, exiting program.

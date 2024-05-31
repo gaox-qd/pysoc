@@ -1,0 +1,9 @@
+#
+#  Coupling between alpha-alpha triplet determinants
+#  Pi-Pi states
+#  Full Breit-Pauli operator
+#
+0 3 D 3 D
+B   0.00000000E+00  0.00000000E+00 -2.47949248E+00  1.0 
+Cl  0.00000000E+00  0.00000000E+00  7.29262494E-01  1.0
+End 

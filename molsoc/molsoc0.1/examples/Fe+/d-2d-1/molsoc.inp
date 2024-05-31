@@ -1,0 +1,6 @@
+# 
+# Coupling between d-2 and d-1 states of Fe+ d6s1
+#
++1 6 R 6 R
+Fe   0.000000000000  0.000000000000  0.000000000000  1.0 
+end

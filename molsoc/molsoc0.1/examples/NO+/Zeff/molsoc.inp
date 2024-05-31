@@ -1,0 +1,9 @@
+#
+# Coupling between 1Sigma+ and 3PI states
+# One-electron operator with Zeff 
+#
+Octupole Zeff
++1 1 D 3 D
+N   0.00000000E+00  0.00000000E+00 -9.60000000E-01  1.0 
+O   0.00000000E+00  0.00000000E+00  8.40000000E-01  1.0
+End
